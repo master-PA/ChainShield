@@ -1,0 +1,391 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0B0F14;
+  color: #E5E7EB;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+.options-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #1F2630;
+  margin-bottom: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-box {
+  width: 36px;
+  height: 36px;
+  background: #134E4A;
+  border: 1px solid #14B8A6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #F9FAFB;
+  font-family: monospace;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: #9CA3AF;
+  display: block;
+}
+
+.badge-status {
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.badge-online {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid #10B981;
+}
+
+.badge-offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid #EF4444;
+}
+
+/* Cards */
+.content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: #11161D;
+  border: 1px solid #1F2630;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F3F4F6;
+  font-family: monospace;
+  margin-bottom: 4px;
+}
+
+.card-desc {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin-bottom: 16px;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+/* Form inputs */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 10px;
+}
+
+.text-input {
+  flex: 1;
+  background: #0B0F14;
+  border: 1px solid #1F2630;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #F3F4F6;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: #14B8A6;
+}
+
+.status-box {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.status-box.hidden {
+  display: none;
+}
+
+.status-box.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid #10B981;
+  color: #34D399;
+}
+
+.status-box.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #EF4444;
+  color: #F87171;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #14B8A6;
+  color: #0B0F14;
+}
+
+.btn-primary:hover {
+  background: #2DD4BF;
+}
+
+.btn-secondary {
+  background: #1F2630;
+  color: #F3F4F6;
+  border: 1px solid #374151;
+}
+
+.btn-secondary:hover {
+  background: #374151;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #9CA3AF;
+  border: 1px solid #1F2630;
+}
+
+.btn-ghost:hover {
+  background: #1F2630;
+  color: #F3F4F6;
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid #EF4444;
+}
+
+.btn-danger:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* Toggles */
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #0B0F14;
+  border: 1px solid #1F2630;
+  border-radius: 8px;
+}
+
+.toggle-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #F3F4F6;
+}
+
+.toggle-desc {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-top: 2px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #1F2630;
+  transition: 0.2s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #9CA3AF;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #14B8A6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(16px);
+  background-color: #0B0F14;
+}
+
+/* Whitelist tags */
+.whitelist-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.whitelist-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0B0F14;
+  border: 1px solid #14B8A6;
+  color: #2DD4BF;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.whitelist-tag-remove {
+  cursor: pointer;
+  color: #9CA3AF;
+  font-weight: bold;
+}
+
+.whitelist-tag-remove:hover {
+  color: #EF4444;
+}
+
+/* Log Table */
+.table-container {
+  overflow-x: auto;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.log-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: #0B0F14;
+  color: #9CA3AF;
+  font-family: monospace;
+  font-weight: 700;
+  border-bottom: 1px solid #1F2630;
+}
+
+.log-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #1F2630;
+  color: #D1D5DB;
+}
+
+.empty-cell {
+  text-align: center;
+  color: #6B7280;
+  padding: 24px !important;
+}
+
+.badge-blocked {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid #EF4444;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.badge-proceeded {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid #F59E0B;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+}

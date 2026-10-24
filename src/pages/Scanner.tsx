@@ -16,6 +16,7 @@ import {
   TransactionForm,
   MessageForm,
   SandboxRunnerView,
+  ContractScanForm,
 } from '../components/scanner/ScannerForms';
 import {
   ScoreGauge,
@@ -24,12 +25,20 @@ import {
   IntentCard,
   MismatchCard,
   CounterfactualCard,
+  ContractAnalysisView,
 } from '../components/scanner/ScannerComponents';
 import { useSecurity } from '../context/SecurityContext';
 
 export const Scanner: React.FC<{ navigate: (route: string) => void }> = ({ navigate }) => {
-  const { activeTargetScan, activeTxScan, explainSimply, language, isDemoDataset } = useSecurity();
-  const [activeTab, setActiveTab] = useState<'target' | 'transaction' | 'message' | 'sandbox'>('target');
+  const {
+    activeTargetScan,
+    activeTxScan,
+    activeContractScan,
+    explainSimply,
+    language,
+    isDemoDataset,
+  } = useSecurity();
+  const [activeTab, setActiveTab] = useState<'target' | 'transaction' | 'message' | 'sandbox' | 'contract'>('target');
   const [copiedHash, setCopiedHash] = useState(false);
 
   const scan = activeTab === 'transaction' ? activeTxScan : activeTargetScan;
@@ -75,6 +84,18 @@ export const Scanner: React.FC<{ navigate: (route: string) => void }> = ({ navig
         </button>
 
         <button
+          onClick={() => setActiveTab('contract')}
+          className={`flex items-center space-x-2 px-4 py-2 text-xs font-medium border-b-2 transition-colors shrink-0 ${
+            activeTab === 'contract'
+              ? 'border-teal-400 text-teal-300 bg-teal-950/20'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Smart Contract</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('transaction')}
           className={`flex items-center space-x-2 px-4 py-2 text-xs font-medium border-b-2 transition-colors shrink-0 ${
             activeTab === 'transaction'
@@ -113,16 +134,37 @@ export const Scanner: React.FC<{ navigate: (route: string) => void }> = ({ navig
 
       {/* Input Forms */}
       {activeTab === 'target' && <TargetForm />}
+      {activeTab === 'contract' && <ContractScanForm />}
       {activeTab === 'transaction' && <TransactionForm />}
       {activeTab === 'message' && <MessageForm />}
       {activeTab === 'sandbox' && <SandboxRunnerView />}
 
-      {/* Results Section (Always visible for active scan) */}
-      <div className="space-y-4 pt-4 border-t border-[#1F2630]">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-zinc-200">
-            Analysis Findings & Explainable Verdict
-          </h2>
+      {/* Results Section */}
+      {activeTab === 'contract' ? (
+        <div className="space-y-4 pt-4 border-t border-[#1F2630]">
+          {activeContractScan ? (
+            <ContractAnalysisView scan={activeContractScan} navigate={navigate} />
+          ) : (
+            <div className="p-8 rounded-lg bg-[#11161D] border border-[#1F2630] text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-teal-950/60 border border-teal-800/80 flex items-center justify-center mx-auto text-teal-400">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-semibold text-zinc-100">
+                Live On-Chain Smart Contract Security Scanner
+              </h3>
+              <p className="text-xs text-zinc-400 max-w-xl mx-auto leading-relaxed">
+                Enter an Ethereum Sepolia or Mainnet contract address above and click{' '}
+                <strong className="text-teal-400">Scan Contract</strong>. ChainShield retrieves live runtime bytecode from Ethereum nodes via JSON-RPC, downloads verified Solidity source files from Etherscan V2 / Sourcify, parses AST structures to detect unrestricted minting and privilege escalations, and computes deterministic evidence-backed risk scores.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4 pt-4 border-t border-[#1F2630]">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-200">
+              Analysis Findings & Explainable Verdict
+            </h2>
           <span className="text-xs font-mono text-zinc-400">
             Target: <strong className="text-teal-400">{'target' in scan ? scan.target : scan.methodName}</strong>
           </span>
@@ -253,6 +295,7 @@ export const Scanner: React.FC<{ navigate: (route: string) => void }> = ({ navig
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

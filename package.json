@@ -8,12 +8,17 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "test": "tsx tests/evidenceVerification.test.ts && tsx tests/scanStorage.test.ts && tsx tests/blockchainEvidence.test.ts",
+    "compile:contracts": "tsx scripts/compileContracts.ts",
     "deploy:registry": "tsx scripts/deployRegistry.ts",
+    "deploy:demo": "tsx scripts/deployDemoContract.ts",
+    "server": "tsx src/server/index.ts",
+    "build:extension": "tsx scripts/buildExtension.ts",
+    "test": "tsx tests/evidenceVerification.test.ts && tsx tests/scanStorage.test.ts && tsx tests/blockchainEvidence.test.ts && tsx tests/contractAnalysis.test.ts && tsx tests/extension.test.ts && tsx tests/preSignInterception.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@solidity-parser/parser": "^0.20.2",
     "@tailwindcss/vite": "^4.3.3",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
@@ -28,14 +33,14 @@
     "vite": "^8.3.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
+    "solc": "^0.8.38",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "typescript": "^7.0.2"
   }
 }

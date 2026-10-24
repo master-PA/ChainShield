@@ -168,6 +168,7 @@ export interface TargetScanResult {
   visualClone?: VisualCloneEvidence;
   drainerMatch?: DrainerKitMatch;
   sandbox?: SandboxRunResult;
+  contractScan?: ContractScanResult;
   unavailableChecks: string[];
   evidence?: EvidenceRecord;
   createdAt: number;
@@ -330,4 +331,87 @@ export interface ProviderHealth {
   lastChecked: string;
   endpoint: string;
   isFallback: boolean;
+}
+
+export type ContractScanStatus =
+  | 'ANALYZED'
+  | 'PARTIAL_ANALYSIS'
+  | 'UNVERIFIED_SOURCE'
+  | 'NO_CONTRACT_CODE'
+  | 'PROVIDER_ERROR';
+
+export type FindingSeverity = 'CRITICAL' | 'HIGH' | 'CAUTION' | 'LOW' | 'INFO';
+export type FindingConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface ContractFinding {
+  id: string;
+  ruleId: string;
+  title: string;
+  severity: FindingSeverity;
+  confidence: FindingConfidence;
+  affectedContract: string;
+  affectedFunction: string;
+  sourceFile: string;
+  lineStart: number;
+  lineEnd: number;
+  codeSnippet: string;
+  description: string;
+  potentialImpact: string;
+  remediation: string;
+  reasoning: string;
+  limitations?: string;
+  scoreContribution: number;
+}
+
+export interface ContractSourceFile {
+  fileName: string;
+  content: string;
+}
+
+export interface ContractSourceMetadata {
+  sourceProvider: 'etherscan-v2' | 'sourcify' | 'local' | 'none';
+  verificationStatus: 'VERIFIED' | 'UNVERIFIED' | 'PARTIAL';
+  contractName: string;
+  compilerVersion: string;
+  optimizationUsed: boolean;
+  runs?: number;
+  isProxy: boolean;
+  proxyType?: 'EIP-1967' | 'EIP-1822' | 'Beacon' | 'Custom';
+  implementationAddress?: string;
+  implementationContractName?: string;
+  implementationVerified?: boolean;
+  sourceFiles: ContractSourceFile[];
+  bytecodeSize: number;
+  bytecodeHash: string;
+  deployedBlock?: number;
+  retrievalDiagnostic?: string;
+  diagnostics?: {
+    sourcify?: string;
+    etherscan?: string;
+  };
+  matchType?: string;
+}
+
+export interface ContractScanResult {
+  id: string;
+  target: string; // normalized checksum contract address
+  targetType: 'contract';
+  chainId: number;
+  networkName: string;
+  status: ContractScanStatus;
+  staticAnalysisStatus?: 'ANALYZED' | 'SKIPPED' | 'UNAVAILABLE';
+  riskScore: number; // 0 - 100
+  riskLevel: RiskLevel;
+  confidence: number; // 0 - 100
+  rulesScore: number;
+  mlScore: number;
+  recommendation: 'AVOID' | 'PROCEED_WITH_CAUTION' | 'SAFE_TO_PROCEED';
+  recommendationText: string;
+  sourceMetadata: ContractSourceMetadata;
+  findings: ContractFinding[];
+  reasons: ReasonItem[];
+  evidence?: EvidenceRecord;
+  createdAt: number;
+  isDemo?: boolean;
+  errorMessage?: string;
 }

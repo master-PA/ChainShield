@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChainShield Sentinel — Local Test dApp & Pre-Sign Interception Testbench</title>
+  <style>
+    :root {
+      --bg: #0B0F14;
+      --card-bg: #11161D;
+      --border: #1F2630;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --teal: #14B8A6;
+      --teal-dark: #134E4A;
+      --red: #EF4444;
+      --amber: #F59E0B;
+      --green: #10B981;
+      --blue: #3B82F6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      padding: 24px;
+    }
+    .container { max-width: 1040px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: var(--teal-dark);
+      border: 1px solid var(--teal);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .brand h1 { font-size: 18px; font-weight: 800; font-family: monospace; letter-spacing: 0.05em; }
+    .brand p { font-size: 12px; color: var(--text-muted); }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-family: monospace;
+      font-weight: 700;
+      background: rgba(20, 184, 166, 0.15);
+      border: 1px solid var(--teal);
+      color: var(--teal);
+    }
+    .status-pill.inactive {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .banner {
+      background: rgba(20, 184, 166, 0.1);
+      border: 1px solid rgba(20, 184, 166, 0.3);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #374151; }
+    .card-tag {
+      font-size: 10px;
+      font-family: monospace;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .tag-safe { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
+    .tag-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid var(--red); }
+    .tag-warn { background: rgba(245, 158, 11, 0.2); color: var(--amber); border: 1px solid var(--amber); }
+
+    .card h3 { font-size: 15px; margin-bottom: 6px; }
+    .card p { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+
+    .code-preview {
+      background: #070A0E;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #93C5FD;
+      margin-bottom: 14px;
+      word-break: break-all;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: filter 0.15s, transform 0.1s;
+    }
+    .btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-safe { background: #0D9488; color: #FFF; }
+    .btn-danger { background: #DC2626; color: #FFF; }
+    .btn-amber { background: #D97706; color: #FFF; }
+
+    .console-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .console-header {
+      background: #070A0E;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .console-header h2 { font-size: 13px; font-family: monospace; font-weight: 700; color: #D1D5DB; }
+    .console-logs {
+      padding: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .log-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #0B0F14;
+    }
+    .log-blocked { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); color: #FCA5A5; }
+    .log-proceeded { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08); color: #6EE7B7; }
+    .log-info { border-color: #2D3748; color: #93C5FD; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div>
+          <h1>CHAINSHIELD SENTINEL — TEST dAPP</h1>
+          <p>Reproducible Pre-Sign Interception & Intent Verification Testbench</p>
+        </div>
+      </div>
+      <div>
+        <span id="extension-badge" class="status-pill inactive">
+          <span>Extension: Checking...</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="banner">
+      <strong>How Pre-Sign Interception Testing Works:</strong>
+      <ol style="margin-left: 20px; margin-top: 6px;">
+        <li>Click any test button below. The dApp triggers an EIP-1193 wallet request (e.g. <code>eth_sendTransaction</code>).</li>
+        <li><strong>ChainShield Sentinel intercepts the request in the browser before the wallet confirmation window appears.</strong></li>
+        <li>An isolated <strong>Closed Shadow DOM warning modal</strong> pops up displaying decoded intent, risk score, and claim-vs-reality mismatch.</li>
+        <li>Click <strong>"Cancel & Block Request"</strong>: The request is aborted with EIP-1193 code <code>4001</code>. The wallet never receives the request.</li>
+        <li>Click <strong>"Proceed to Wallet"</strong>: The request forwards untouched to your wallet with the exact original parameters.</li>
+      </ol>
+      <div style="margin-top: 8px; color: #9CA3AF; font-size: 12px;">
+        <em>Note: Testing does NOT broadcast transactions or spend any funds. A built-in mock wallet runner is active if no browser wallet extension is installed.</em>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Card 1: Harmless Test Transaction -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-safe">TEST 1 • SAFE / LOW RISK</span>
+          <h3>Harmless Test Transaction</h3>
+          <p>Calls <code>eth_sendTransaction</code> to transfer 0 ETH to a safe address. Verifies standard safe interactions without false alarms.</p>
+          <div class="code-preview">
+            eth_sendTransaction({ to: "0x71C8...2494", value: "0x0", data: "0x" })
+          </div>
+        </div>
+        <button id="btn-harmless" class="btn btn-safe">
+          <span>🕊️</span>
+          <span>Send Harmless Test Interaction</span>
+        </button>
+      </div>
+
+      <!-- Card 2: Unlimited ERC-20 Allowance -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-danger">TEST 2 • CRITICAL MISMATCH</span>
+          <h3>Unlimited Token Allowance Phish</h3>
+          <p>Button promises "Claim Free AIRDROP", but underlying calldata calls <code>approve(spender, 2^256-1)</code>. Triggers 100/100 Intent Mismatch.</p>
+          <div class="code-preview">
+            0x095ea7b3 + attacker_address + ffffffffffffffff... (2^256-1)
+          </div>
+        </div>
+        <button id="btn-unlimited-approve" class="btn btn-danger">
+          <span>🎁</span>
+          <span>Claim Free 10,000 AIRDROP Tokens</span>
+        </button>
+      </div>
+
+      <!-- Card 3: Blanket NFT Drainer -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-danger">TEST 3 • BLANKET DRAINER</span>
+          <h3>Blanket NFT Operator Approval</h3>
+          <p>Button promises "Claim Free NFT", but calldata calls <code>setApprovalForAll(attacker, true)</code> to siphon all collection NFTs.</p>
+          <div class="code-preview">
+            0xa2205344 + operator_address + 00000001 (true)
+          </div>
+        </div>
+        <button id="btn-blanket-nft" class="btn btn-danger">
+          <span>🖼️</span>
+          <span>Claim Free Whitelist NFT</span>
+        </button>
+      </div>
+
+      <!-- Card 4: Off-Chain EIP-2612 Permit -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-danger">TEST 4 • OFF-CHAIN PERMIT</span>
+          <h3>Off-Chain Unlimited Permit2 Phishing</h3>
+          <p>Calls <code>eth_signTypedData_v4</code> requesting a gasless EIP-2612 Permit with max 2^256-1 allowance.</p>
+          <div class="code-preview">
+            eth_signTypedData_v4({ primaryType: "Permit", value: "2^256-1" })
+          </div>
+        </div>
+        <button id="btn-offchain-permit" class="btn btn-amber">
+          <span>✍️</span>
+          <span>Sign Gasless Permit Authorization</span>
+        </button>
+      </div>
+
+      <!-- Card 5: Plaintext personal_sign -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-warn">TEST 5 • OFF-CHAIN SIGNATURE</span>
+          <h3>Suspicious Plaintext Signature</h3>
+          <p>Calls <code>personal_sign</code> with a message attempting to authorize balance draining.</p>
+          <div class="code-preview">
+            personal_sign("Authorize asset transfers and drain balance")
+          </div>
+        </div>
+        <button id="btn-personal-sign" class="btn btn-amber">
+          <span>🔏</span>
+          <span>Sign Verification Message</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Interception Audit Terminal -->
+    <div class="console-section">
+      <div class="console-header">
+        <h2>LIVE INTERCEPTION VERIFICATION CONSOLE</h2>
+        <button id="btn-clear-logs" style="background:transparent; border:1px solid #374151; color:#9CA3AF; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Clear Logs</button>
+      </div>
+      <div id="console-logs" class="console-logs">
+        <div class="log-item log-info">Ready. Click any test action above to verify pre-sign interception.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Setup Mock Wallet Provider Fallback if no wallet extension is installed
+    const underlyingWalletLog = [];
+
+    function setupMockProviderIfNeeded() {
+      if (!window.ethereum) {
+        console.log('[Test dApp] No wallet extension found. Initializing built-in Mock EIP-1193 Provider...');
+        window.ethereum = {
+          isMetaMask: true,
+          isChainShieldMockWallet: true,
+          request: async function(args) {
+            underlyingWalletLog.push({ timestamp: Date.now(), method: args.method, params: args.params });
+            addLog(
+              '📥 [UNDERLYING WALLET RECEIVED REQUEST] Method: ' + args.method + ' | Params forwarded with 100% parameter fidelity.',
+              'log-proceeded'
+            );
+            return '0xsimulated_tx_hash_' + Math.random().toString(36).slice(2, 10);
+          }
+        };
+      }
+    }
+
+    setupMockProviderIfNeeded();
+
+    // 2. Extension Presence Detector
+    const extensionBadge = document.getElementById('extension-badge');
+    function checkExtensionPresence() {
+      if (window.__CHAINSHIELD_INPAGE_INJECTED__) {
+        extensionBadge.className = 'status-pill';
+        extensionBadge.innerHTML = '<span>🛡️ Extension: ACTIVE & INTERCEPTING</span>';
+      } else {
+        extensionBadge.className = 'status-pill inactive';
+        extensionBadge.innerHTML = '<span>⚠️ Extension: NOT DETECTED (Load extension/ in Edge/Chrome)</span>';
+      }
+    }
+
+    checkExtensionPresence();
+    setInterval(checkExtensionPresence, 500);
+
+    // 3. Logger helper
+    const consoleLogs = document.getElementById('console-logs');
+    function addLog(message, type = 'log-info') {
+      const item = document.createElement('div');
+      item.className = 'log-item ' + type;
+      const time = new Date().toLocaleTimeString();
+      item.innerHTML = '<strong>[' + time + ']</strong> ' + escapeHtml(message);
+      consoleLogs.prepend(item);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    document.getElementById('btn-clear-logs').addEventListener('click', () => {
+      consoleLogs.innerHTML = '<div class="log-item log-info">Logs cleared. Ready.</div>';
+    });
+
+    const TEST_USER = '0x71C84167F30831956453773266292494';
+    const ATTACKER = '0x1111111111111111111111111111111111111111';
+
+    // TEST 1: Harmless Transaction
+    document.getElementById('btn-harmless').addEventListener('click', async () => {
+      addLog('Triggering Test 1: Harmless 0-ETH call to 0x71C8...2494...', 'log-info');
+      try {
+        const result = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: TEST_USER,
+            to: TEST_USER,
+            value: '0x0',
+            data: '0x'
+          }]
+        });
+        addLog('✅ Result: User clicked "Proceed". Transaction forwarded to wallet successfully! Result: ' + JSON.stringify(result), 'log-proceeded');
+      } catch (err) {
+        if (err.code === 4001) {
+          addLog('🛑 Result: User clicked "Cancel & Block Request" in ChainShield Sentinel. Request rejected with code 4001. Wallet was NOT prompted!', 'log-blocked');
+        } else {
+          addLog('Error: ' + err.message, 'log-blocked');
+        }
+      }
+    });
+
+    // TEST 2: Unlimited ERC-20 Approval Phish
+    document.getElementById('btn-unlimited-approve').addEventListener('click', async () => {
+      addLog('Triggering Test 2: Button claimed "Claim Free Airdrop", initiating approve(attacker, 2^256-1)...', 'log-info');
+      try {
+        const result = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: TEST_USER,
+            to: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
+            // approve(attacker, 2^256-1)
+            data: '0x095ea7b30000000000000000000000001111111111111111111111111111111111111111ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+          }]
+        });
+        addLog('⚠️ User explicitly chose Proceed to Wallet. Payload forwarded to wallet.', 'log-proceeded');
+      } catch (err) {
+        if (err.code === 4001) {
+          addLog('🛡️ SUCCESS: ChainShield Sentinel intercepted the Unlimited Approval mismatch! User clicked "Cancel & Block". Wallet NEVER prompted (code 4001).', 'log-blocked');
+        } else {
+          addLog('Error: ' + err.message, 'log-blocked');
+        }
+      }
+    });
+
+    // TEST 3: Blanket NFT Drainer
+    document.getElementById('btn-blanket-nft').addEventListener('click', async () => {
+      addLog('Triggering Test 3: Button claimed "Claim Free NFT", initiating setApprovalForAll(attacker, true)...', 'log-info');
+      try {
+        const result = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: TEST_USER,
+            to: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', // BAYC
+            // setApprovalForAll(attacker, true)
+            data: '0xa220534400000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000001'
+          }]
+        });
+        addLog('⚠️ User chose Proceed on blanket NFT approval.', 'log-proceeded');
+      } catch (err) {
+        if (err.code === 4001) {
+          addLog('🛡️ SUCCESS: Blanket NFT drain blocked! Pre-sign interception halted the attack before wallet confirmation.', 'log-blocked');
+        } else {
+          addLog('Error: ' + err.message, 'log-blocked');
+        }
+      }
+    });
+
+    // TEST 4: Off-Chain Permit Phishing
+    document.getElementById('btn-offchain-permit').addEventListener('click', async () => {
+      addLog('Triggering Test 4: eth_signTypedData_v4 requesting unlimited EIP-2612 Permit...', 'log-info');
+      const permitData = {
+        types: {
+          EIP712Domain: [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' }
+          ],
+          Permit: [
+            { name: 'owner', type: 'address' },
+            { name: 'spender', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' }
+          ]
+        },
+        primaryType: 'Permit',
+        domain: {
+          name: 'USD Coin',
+          version: '2',
+          chainId: 1,
+          verifyingContract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+        },
+        message: {
+          owner: TEST_USER,
+          spender: ATTACKER,
+          value: '115792089237316195423570985008687907853269984665640564039457584007913129639935',
+          nonce: 0,
+          deadline: 1893456000
+        }
+      };
+
+      try {
+        const result = await window.ethereum.request({
+          method: 'eth_signTypedData_v4',
+          params: [TEST_USER, JSON.stringify(permitData)]
+        });
+        addLog('User chose Proceed on typed data permit.', 'log-proceeded');
+      } catch (err) {
+        if (err.code === 4001) {
+          addLog('🛡️ SUCCESS: Gasless permit signature intercepted and blocked before wallet confirmation (code 4001).', 'log-blocked');
+        } else {
+          addLog('Error: ' + err.message, 'log-blocked');
+        }
+      }
+    });
+
+    // TEST 5: Plaintext personal_sign
+    document.getElementById('btn-personal-sign').addEventListener('click', async () => {
+      addLog('Triggering Test 5: personal_sign with suspicious authorization text...', 'log-info');
+      const msgHex = '0x417574686f72697a6520616c6c206173736574207472616e736665727320616e6420647261696e2062616c616e6365'; // "Authorize all asset transfers and drain balance"
+      try {
+        const result = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [msgHex, TEST_USER]
+        });
+        addLog('User chose Proceed on personal_sign.', 'log-proceeded');
+      } catch (err) {
+        if (err.code === 4001) {
+          addLog('🛡️ SUCCESS: personal_sign intercepted and blocked before wallet confirmation (code 4001).', 'log-blocked');
+        } else {
+          addLog('Error: ' + err.message, 'log-blocked');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

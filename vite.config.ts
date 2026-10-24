@@ -3,9 +3,19 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
+function contractApiPlugin() {
+  return {
+    name: 'contract-scanner-api',
+    async configureServer(server: any) {
+      const { app } = await import('./src/server/index');
+      server.middlewares.use(app);
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), contractApiPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

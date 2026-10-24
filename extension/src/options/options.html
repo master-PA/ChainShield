@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChainShield Sentinel — Extension Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-box">🛡️</div>
+        <div>
+          <h1 class="brand-title">ChainShield Sentinel</h1>
+          <span class="brand-sub">Manifest V3 Extension Options & Security Policies</span>
+        </div>
+      </div>
+      <div class="header-badge">
+        <span id="opt-status-badge" class="badge-status badge-offline">Checking API...</span>
+      </div>
+    </header>
+
+    <main class="content-grid">
+      <!-- Section 1: Backend Sentinel API -->
+      <section class="card">
+        <h2 class="card-title">1. Backend Sentinel API Gateway</h2>
+        <p class="card-desc">
+          Configure the ChainShield Sentinel backend API endpoint. The extension queries this service for live on-chain smart contract bytecode verification and server-side threat heuristics.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="opt-api-url">API Base URL</label>
+          <div class="input-with-button">
+            <input type="text" id="opt-api-url" class="text-input" placeholder="http://localhost:3000">
+            <button id="opt-test-api-btn" class="btn btn-secondary">Test Connection</button>
+            <button id="opt-reset-api-btn" class="btn btn-ghost">Reset Default</button>
+          </div>
+          <div id="opt-api-status" class="status-box hidden"></div>
+        </div>
+      </section>
+
+      <!-- Section 2: Threat Detection & Interception Toggles -->
+      <section class="card">
+        <h2 class="card-title">2. Interception & Detection Policies</h2>
+        <p class="card-desc">
+          Fine-tune pre-sign inspection and real-time phishing detection parameters across your browser sessions.
+        </p>
+
+        <div class="toggle-list">
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-title">Pre-Sign Transaction Interception</div>
+              <div class="toggle-desc">Wraps window.ethereum to inspect transactions before wallet prompts appear</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="opt-toggle-presign" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-title">Automated Navigation Scanning</div>
+              <div class="toggle-desc">Evaluates domain typosquatting, Punycode, and drainer signatures on page visit</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="opt-toggle-autoscan" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-title">Strict Mode (Require Confirmation on All Actions)</div>
+              <div class="toggle-desc">Displays pre-sign warning modals even on whitelisted dApps for total visibility</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="opt-toggle-strict">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-item">
+            <div>
+              <div class="toggle-title">Explain Simply Mode</div>
+              <div class="toggle-desc">Presents plain-language layman explanations instead of raw EVM calldata</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="opt-toggle-simply">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Whitelist Management -->
+      <section class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">3. Personal Domain Whitelist</h2>
+            <p class="card-desc">
+              Transactions requested by whitelisted domains bypass non-critical warning dialogs.
+            </p>
+          </div>
+          <button id="opt-reset-whitelist-btn" class="btn btn-ghost">Reset to Defaults</button>
+        </div>
+
+        <div class="form-group">
+          <div class="input-with-button">
+            <input type="text" id="opt-add-whitelist-input" class="text-input" placeholder="e.g. app.uniswap.org or lido.fi">
+            <button id="opt-add-whitelist-btn" class="btn btn-primary">Add Domain</button>
+          </div>
+        </div>
+
+        <div class="whitelist-container">
+          <div id="opt-whitelist-list" class="whitelist-tags"></div>
+        </div>
+      </section>
+
+      <!-- Section 4: Threat Logs & Export -->
+      <section class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">4. Threat Interception Audit Logs</h2>
+            <p class="card-desc">
+              Chronological log of transactions intercepted and domains flagged by the Sentinel extension.
+            </p>
+          </div>
+          <div class="btn-group">
+            <button id="opt-export-logs-btn" class="btn btn-secondary">Export JSON</button>
+            <button id="opt-clear-logs-btn" class="btn btn-danger">Clear Logs</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Target Origin</th>
+                <th>Method</th>
+                <th>Risk Score</th>
+                <th>Action</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="opt-logs-tbody">
+              <tr>
+                <td colspan="6" class="empty-cell">No threat events recorded.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../dist/options.js"></script>
+</body>
+</html>

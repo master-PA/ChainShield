@@ -8,6 +8,7 @@ import {
   AddressPoisoningAlert,
   CommunityReport,
   LinkSource,
+  ContractScanResult,
 } from '../types/security';
 import {
   ROHIT_WORKED_EXAMPLE,
@@ -61,6 +62,10 @@ interface SecurityContextType {
   chatOpen: boolean;
   chatMessages: ChatMessageItem[];
   isScanning: boolean;
+  activeContractScan: ContractScanResult | null;
+  contractScanLoading: boolean;
+  contractScanStep: string;
+  contractScanError: string | null;
 
   setChatOpen: (open: boolean) => void;
   toggleLanguage: () => void;
@@ -68,6 +73,7 @@ interface SecurityContextType {
   toggleDemoDataset: () => void;
 
   runTargetScan: (target: string, linkSource?: LinkSource, isPrivateCheck?: boolean) => Promise<TargetScanResult>;
+  runContractScan: (chainId: number, address: string) => Promise<ContractScanResult>;
   runTxScan: (calldata: string, claimedText?: string) => Promise<TransactionScanResult>;
   runMessageScan: (text: string) => Promise<MessageScanResult>;
   submitCommunityReport: (
@@ -106,6 +112,68 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [explainSimply, setExplainSimply] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
+
+  // Smart Contract Scanner state
+  const [activeContractScan, setActiveContractScan] = useState<ContractScanResult | null>(null);
+  const [contractScanLoading, setContractScanLoading] = useState<boolean>(false);
+  const [contractScanStep, setContractScanStep] = useState<string>('');
+  const [contractScanError, setContractScanError] = useState<string | null>(null);
+
+  const runContractScan = async (chainId: number, address: string): Promise<ContractScanResult> => {
+    setContractScanLoading(true);
+    setContractScanError(null);
+    setContractScanStep('Connecting to network RPC and querying runtime bytecode...');
+    try {
+      const response = await fetch('/api/v1/contract-scans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chainId, address }),
+      });
+
+      setContractScanStep('Retrieving verified source code & analyzing AST security rules...');
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        const msg = data.error || `HTTP error ${response.status}`;
+        setContractScanError(msg);
+        throw new Error(msg);
+      }
+
+      const result: ContractScanResult = data.result;
+      setActiveContractScan(result);
+
+      // Save into allScans history
+      const envelope: TargetScanResult = {
+        id: result.id,
+        target: result.target,
+        targetType: 'contract',
+        riskScore: result.riskScore,
+        riskLevel: result.riskLevel,
+        confidence: result.confidence,
+        rulesScore: result.rulesScore,
+        mlScore: result.mlScore,
+        recommendation: result.recommendation,
+        recommendationText: result.recommendationText,
+        linkSource: 'direct',
+        isPrivateCheck: false,
+        reasons: result.reasons,
+        contractScan: result,
+        unavailableChecks: [],
+        evidence: result.evidence,
+        createdAt: result.createdAt,
+        isDemo: false,
+      };
+
+      setAllScans((prev) => [envelope, ...prev.filter((s) => s.target !== result.target)]);
+      return result;
+    } catch (err: any) {
+      setContractScanError(err.message || 'Contract scan failed');
+      throw err;
+    } finally {
+      setContractScanLoading(false);
+      setContractScanStep('');
+    }
+  };
 
   const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([
     {
@@ -450,11 +518,16 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         chatOpen,
         chatMessages,
         isScanning,
+        activeContractScan,
+        contractScanLoading,
+        contractScanStep,
+        contractScanError,
         setChatOpen,
         toggleLanguage,
         toggleExplainSimply,
         toggleDemoDataset,
         runTargetScan,
+        runContractScan,
         runTxScan,
         runMessageScan,
         submitCommunityReport,

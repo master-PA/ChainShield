@@ -10,6 +10,9 @@ import {
   Terminal,
   RefreshCw,
   HelpCircle,
+  ShieldCheck,
+  AlertCircle,
+  Layers,
 } from 'lucide-react';
 import { useSecurity } from '../../context/SecurityContext';
 import { LinkSource, SandboxRunResult } from '../../types/security';
@@ -362,3 +365,157 @@ export const SandboxRunnerView: React.FC = () => {
     </div>
   );
 };
+
+export const ContractScanForm: React.FC = () => {
+  const { runContractScan, contractScanLoading, contractScanStep, contractScanError } = useSecurity();
+  const [chainId, setChainId] = useState<number>(11155111); // Ethereum Sepolia default
+  const [address, setAddress] = useState<string>('0x7b79995e5f793a07bc00c21412e50ecae098e7f9'); // Sepolia WETH default
+  const [inputError, setInputError] = useState<string | null>(null);
+
+  // If user configured SEPOLIA_DEMO_CONTRACT_ADDRESS in environment
+  const demoAddress =
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SEPOLIA_DEMO_CONTRACT_ADDRESS) ||
+    '';
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = address.trim();
+    if (!clean) {
+      setInputError('Please enter a smart contract address');
+      return;
+    }
+    if (!/^0x[0-9a-fA-F]{40}$/.test(clean)) {
+      setInputError('Invalid contract address format. Must be a 40-character hexadecimal address starting with 0x.');
+      return;
+    }
+    setInputError(null);
+    runContractScan(chainId, clean).catch(() => {});
+  };
+
+  const handleSelectPreset = (targetChainId: number, targetAddr: string) => {
+    setChainId(targetChainId);
+    setAddress(targetAddr);
+    setInputError(null);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 rounded-lg bg-[#11161D] border border-[#1F2630] space-y-4">
+      {/* Network & Chain Selector */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-1">
+          <label className="text-[11px] font-mono text-zinc-400 block mb-1.5 flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-teal-400" />
+            <span>BLOCKCHAIN NETWORK</span>
+          </label>
+          <select
+            value={chainId}
+            onChange={(e) => setChainId(Number(e.target.value))}
+            className="w-full bg-[#161D26] border border-[#1F2630] rounded-md px-3 py-2 text-xs font-medium text-zinc-100 focus:outline-none focus:border-teal-500"
+          >
+            <option value={11155111}>Ethereum Sepolia (11155111)</option>
+            <option value={1}>Ethereum Mainnet (1)</option>
+          </select>
+        </div>
+
+        {/* Address Input */}
+        <div className="sm:col-span-2">
+          <label className="text-[11px] font-mono text-zinc-400 block mb-1.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+              <span>CONTRACT ADDRESS (40-HEX)</span>
+            </span>
+            <span className="text-[10px] text-zinc-500 font-mono">Read-Only Live Query</span>
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => {
+                setAddress(e.target.value);
+                if (inputError) setInputError(null);
+              }}
+              placeholder="0x..."
+              className="flex-1 bg-[#161D26] border border-[#1F2630] rounded-md px-3 py-2 text-xs font-mono text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-teal-500"
+            />
+            <button
+              type="submit"
+              disabled={contractScanLoading || !address.trim()}
+              className="px-5 py-2 rounded-md bg-teal-500 hover:bg-teal-400 text-[#0B0F14] font-semibold text-xs transition-colors flex items-center space-x-1.5 shrink-0 disabled:opacity-50"
+            >
+              {contractScanLoading ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Scan Contract</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Input or Server Error Banners */}
+      {(inputError || contractScanError) && (
+        <div className="p-3 rounded bg-rose-950/30 border border-rose-900/60 flex items-center gap-2.5 text-xs text-rose-300">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+          <span>{inputError || contractScanError}</span>
+        </div>
+      )}
+
+      {/* Scanning Step Status Progress */}
+      {contractScanLoading && contractScanStep && (
+        <div className="p-3 rounded bg-teal-950/20 border border-teal-800/50 flex items-center gap-2 text-xs text-teal-300 font-mono animate-pulse">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0 text-teal-400" />
+          <span>{contractScanStep}</span>
+        </div>
+      )}
+
+      {/* Preset Quick Fill Buttons */}
+      <div className="pt-2 border-t border-[#1F2630] flex flex-wrap items-center gap-2">
+        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1">
+          Quick Fixtures:
+        </span>
+        {demoAddress ? (
+          <button
+            type="button"
+            onClick={() => handleSelectPreset(11155111, demoAddress)}
+            className="px-2.5 py-1 text-[11px] font-mono rounded bg-rose-950/40 text-rose-300 border border-rose-900/60 hover:bg-rose-900/50 transition-colors"
+          >
+            🔥 UnsafeMintDemo (Sepolia)
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              // Inform user how to deploy or load demo
+              setChainId(11155111);
+              setInputError('Sepolia Demo address not yet set in .env.local (SEPOLIA_DEMO_CONTRACT_ADDRESS). Enter any deployed address or run npm run deploy:demo.');
+            }}
+            className="px-2.5 py-1 text-[11px] font-mono rounded bg-[#161D26] text-zinc-400 border border-[#1F2630] hover:text-zinc-200 transition-colors"
+          >
+            ℹ️ Demo Contract Setup
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => handleSelectPreset(11155111, '0x7b79995e5f793a07bc00c21412e50ecae098e7f9')}
+          className="px-2.5 py-1 text-[11px] font-mono rounded bg-[#161D26] text-zinc-300 border border-[#1F2630] hover:border-teal-700 hover:text-teal-300 transition-colors"
+        >
+          Sepolia Canonical WETH9 (Verified)
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSelectPreset(1, '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D')}
+          className="px-2.5 py-1 text-[11px] font-mono rounded bg-[#161D26] text-zinc-300 border border-[#1F2630] hover:border-teal-700 hover:text-teal-300 transition-colors"
+        >
+          Mainnet Uniswap V2 Router
+        </button>
+      </div>
+    </form>
+  );
+};
+

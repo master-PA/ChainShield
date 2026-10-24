@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChainShield Sentinel</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-box">🛡️</div>
+        <div>
+          <h1 class="brand-title">ChainShield</h1>
+          <span class="brand-sub">Sentinel Web3 Pre-Sign</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="backend-status-badge" class="badge-status badge-offline" title="Checking backend...">Checking...</span>
+        <button id="open-options-btn" class="icon-btn" title="Settings & Options">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="tab-scan">Current Tab</button>
+      <button class="nav-tab" data-tab="tab-history">Threats (<span id="threat-count">0</span>)</button>
+      <button class="nav-tab" data-tab="tab-settings">Settings</button>
+    </nav>
+
+    <!-- Content Sections -->
+    <main class="main-content">
+      <!-- Tab 1: Current Tab Security -->
+      <section id="tab-scan" class="tab-pane active">
+        <!-- Target Info Card -->
+        <div class="target-card">
+          <div class="target-row">
+            <span class="target-label">ACTIVE TARGET</span>
+            <span id="whitelist-tag" class="tag-whitelist hidden">WHITELISTED</span>
+          </div>
+          <div id="target-host" class="target-host">Loading target...</div>
+        </div>
+
+        <!-- Risk Score Gauge -->
+        <div class="score-card">
+          <div class="gauge-container">
+            <div id="gauge-circle" class="gauge-circle">
+              <span id="gauge-score" class="gauge-score">0</span>
+              <span class="gauge-max">/100</span>
+            </div>
+          </div>
+          <div class="score-meta">
+            <div id="risk-badge" class="risk-badge risk-low">LOW RISK</div>
+            <div id="recommendation-text" class="recommendation-text">Analyzing page security...</div>
+          </div>
+        </div>
+
+        <!-- Threat Reasons List -->
+        <div class="reasons-section">
+          <div class="section-title">HEURISTIC FACTORS</div>
+          <div id="reasons-list" class="reasons-list">
+            <div class="empty-state">No risk factors identified.</div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-footer">
+          <button id="open-web-scanner-btn" class="btn btn-primary">Open in Full Sentinel Scanner</button>
+          <button id="toggle-whitelist-btn" class="btn btn-secondary">Whitelist Domain</button>
+        </div>
+      </section>
+
+      <!-- Tab 2: Threat Log -->
+      <section id="tab-history" class="tab-pane">
+        <div class="pane-header">
+          <span class="pane-title">RECENT INTERCEPTIONS & SCANS</span>
+          <button id="clear-history-btn" class="btn-link">Clear</button>
+        </div>
+        <div id="threat-log-list" class="threat-log-list">
+          <div class="empty-state">No threat events recorded.</div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Settings -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="settings-group">
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">Auto-Scan on Navigation</div>
+              <div class="setting-desc">Check domain typosquatting and drainer signatures on visit</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-autoscan" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">Pre-Sign Interception</div>
+              <div class="setting-desc">Intercept window.ethereum requests before wallet popup</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-presign" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-title">Explain Simply Mode</div>
+              <div class="setting-desc">Translate technical contract terms into layman guidance</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-simply">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="setting-title">Backend Sentinel API URL</div>
+          <div class="api-input-row">
+            <input type="text" id="setting-api-url" class="text-input" placeholder="http://localhost:3000">
+            <button id="test-api-btn" class="btn btn-small">Test</button>
+          </div>
+          <div id="api-test-result" class="api-test-result"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="../dist/popup.js"></script>
+</body>
+</html>
