@@ -101,6 +101,18 @@ export function formatRpcError(err: unknown): string {
     if (msg.includes('user rejected') || errObj.code === 4001 || errObj.code === 'ACTION_REJECTED') {
       return 'User rejected the transaction in wallet.';
     }
+    if (msg.includes('EvidenceAlreadyRegistered')) {
+      return 'This report ID is already anchored on-chain in EvidenceRegistry. Re-anchoring with the same ID is not permitted.';
+    }
+    if (msg.includes('EmptyReportId')) {
+      return 'Report ID cannot be empty.';
+    }
+    if (msg.includes('InvalidEvidenceHash')) {
+      return 'Evidence hash cannot be zero.';
+    }
+    if (msg.includes('insufficient funds') || msg.includes('exceeds balance')) {
+      return 'Insufficient Sepolia ETH in wallet to pay gas fees.';
+    }
     if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
       return 'Sepolia RPC rate limit exceeded. Please configure a custom RPC URL in .env.';
     }

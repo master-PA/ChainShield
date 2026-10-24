@@ -63,16 +63,26 @@ console.log('=== Running Blockchain Evidence Anchoring Tests ===\n');
 {
   console.log('\nTest 3: queryOnChainEvidence handles RPC errors gracefully');
 
-  // Point to a non-existent local port to guarantee connection refused
-  const result = await queryOnChainEvidence('REP-SEPOLIA-001', {
-    rpcUrl: 'http://127.0.0.1:54321', // Unreachable port
-    contractAddress: '0x1234567890123456789012345678901234567890',
-    isConfigured: true,
-  });
+  // Use a failing runner to simulate an instantaneous RPC/network failure
+  const failingRunner: ethers.ContractRunner = {
+    provider: null,
+    call: async () => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:8545');
+    },
+  };
+
+  const result = await queryOnChainEvidence(
+    'REP-SEPOLIA-001',
+    {
+      contractAddress: '0x1234567890123456789012345678901234567890',
+      isConfigured: true,
+    },
+    failingRunner
+  );
 
   assert.equal(result.status, 'RPC_ERROR', 'Network failure must return RPC_ERROR status');
   assert.notEqual(result.error, undefined, 'Error message must be populated');
-  assert.equal(typeof result.error, 'string');
+  assert.ok(result.error?.includes('Unable to connect'), 'Error should describe connection failure');
 
   console.log('  ✓ Network/RPC errors captured cleanly without unhandled rejections');
 }
@@ -94,6 +104,14 @@ console.log('=== Running Blockchain Evidence Anchoring Tests ===\n');
   // Connection refused
   const connMsg = formatRpcError({ message: 'connect ECONNREFUSED 127.0.0.1:8545' });
   assert.ok(connMsg.includes('Unable to connect'), 'Connection failure should be identified');
+
+  // Duplicate report ID error
+  const dupMsg = formatRpcError({ message: 'execution reverted: EvidenceAlreadyRegistered("REP-1", 0x123...)' });
+  assert.ok(dupMsg.includes('already anchored'), 'Duplicate report ID error should be identified');
+
+  // Insufficient funds
+  const fundsMsg = formatRpcError({ message: 'insufficient funds for intrinsic transaction cost' });
+  assert.ok(fundsMsg.includes('Insufficient Sepolia ETH'), 'Insufficient funds error should be identified');
 
   console.log('  ✓ RPC errors formatted cleanly into user-friendly diagnostic messages');
 }

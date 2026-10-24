@@ -37,15 +37,18 @@ async function main() {
   }
 
   // Connect to Sepolia testnet
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-  const network = await provider.getNetwork();
-  console.log(`Connected to network: ${network.name} (Chain ID: ${network.chainId})`);
+  const network = ethers.Network.from({ chainId: 11155111, name: 'sepolia' });
+  const provider = new ethers.JsonRpcProvider(rpcUrl, network, { staticNetwork: network });
+  console.log(`Targeting network: Sepolia (Chain ID: 11155111) via ${rpcUrl}`);
 
-  if (Number(network.chainId) !== 11155111) {
-    console.warn(`WARNING: Target chain ID is ${network.chainId}, expected 11155111 (Sepolia).`);
+  // Normalize private key
+  const formattedKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(formattedKey)) {
+    console.error('ERROR: DEPLOYER_PRIVATE_KEY must be a valid 32-byte hex string (64 characters).');
+    process.exit(1);
   }
 
-  const wallet = new ethers.Wallet(privateKey, provider);
+  const wallet = new ethers.Wallet(formattedKey, provider);
   const deployerAddress = await wallet.getAddress();
   const balance = await provider.getBalance(deployerAddress);
   console.log(`Deployer address: ${deployerAddress}`);
