@@ -1,0 +1,6 @@
+{
+  "name": "ChainShield Sentinel",
+  "description": "Pre-Transaction Web3 Security Platform: Explainable 0-100 risk scoring, transaction decoding, claim-vs-reality verification, and tamper-evident evidence anchoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
