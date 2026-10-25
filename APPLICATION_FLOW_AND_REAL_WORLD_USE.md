@@ -448,22 +448,33 @@ sequenceDiagram
      - **Proceed to Wallet:** Forwards the captured original arguments byte-for-byte to the underlying wallet provider without any alterations.
    - Enforces a strict **Zero Silent Broadcast** policy: ChainShield never signs, approves, or broadcasts any transaction automatically.
 
-3. **Reproducible Local Test dApp Verification (`/test-dapp.html` & `test-dapp/index.html`):**
+3. **Central Security Gate Outcomes (`ALLOW`, `WARN`, `BLOCK`):**
+   - **`ALLOW`**: Harmless requests on verified domains with low risk (e.g. harmless read or standard safe call) bypass blocking modals and pass through to the wallet provider directly.
+   - **`WARN`**: High-impact or suspicious requests (unlimited approvals, gasless permits, unverified callers, large allowances) trigger the closed Shadow DOM pre-sign modal with full evidence before offering Proceed.
+   - **`BLOCK`**: Confirmed drainer networks, zero-consideration Seaport exploits, or high-confidence phishing patterns are halted immediately with code `4001` before reaching the wallet.
+   - **`DEGRADED MODE`**: If the scanner backend is unavailable or times out, local heuristics evaluate the request and an amber notice warns the user that contract source could not be verified on-chain. Requests are never silently labeled safe when unscanned.
+
+4. **Explicit Method-Coverage Registry:**
+   - Every EIP-1193 JSON-RPC method is classified as `FULLY_INTERCEPTED`, `PARTIALLY_ANALYZED`, or `UNSUPPORTED`.
+   - `eth_sendRawTransaction` is explicitly marked `PARTIALLY_ANALYZED` with the disclosure that pre-signed bytecode cannot be altered, but transmission to known malicious destinations can be blocked.
+   - Off-chain OpenSea Seaport listing signatures (`OrderComponents`) are decoded and explicitly differentiated from on-chain approvals (`setApprovalForAll`), preventing false claims of NFT approval while intercepting zero-price listing drainer attacks.
+
+5. **Concurrency & Race Condition Prevention (`RequestQueueManager`):**
+   - Tracks in-flight requests, suppresses rapid duplicate clicks, and enforces a 90-second bounded timeout to prevent hanging UI states.
+   - Guarantees byte-for-byte parameter immutability on Proceed, while ensuring Cancel aborts requests before the wallet confirmation is ever invoked.
+
+6. **Reproducible Local Test dApp Verification (`/test-dapp.html` & `test-dapp/index.html`):**
    - A dedicated dark-mode Web3 test dApp is provided at `http://localhost:3000/test-dapp.html`.
-   - Contains 5 live test scenarios (Harmless 0 ETH transfer, Unlimited token approval mismatch, Blanket NFT operator approval, Off-chain gasless permit phishing, and Plaintext signature phishing).
+   - Contains 10 live test scenarios (Harmless 0 ETH transfer, Unlimited token approval mismatch, Blanket NFT operator approval, Off-chain gasless permit phishing, Plaintext signature phishing, Invalid address validation guard, Uniswap Multicall swap, OpenSea Seaport listing, Smart Account batch calls, and Network switching).
    - Features a built-in mock EIP-1193 wallet fallback, allowing developers and security auditors to verify pre-sign interception, cancel paths, and proceed paths without requiring external wallet extensions or gas funds.
 
-4. **Automated Navigation Scanning & Dynamic Toolbar Badges (`serviceWorker.ts`):**
+7. **Automated Navigation Scanning & Dynamic Toolbar Badges (`serviceWorker.ts`):**
    - On every page load, `contentScript.ts` captures `window.location.href` and dispatches `TAB_PAGE_VISITED` to the background service worker.
    - The service worker queries the ChainShield backend gateway (`POST /api/v1/target-scans`), checks local whitelists, and updates the extension toolbar badge:
      - `SAFE` (Green, `#10b981`) for verified Web3 protocols (Uniswap, OpenSea, Aave).
      - `WARN` (Amber, `#f59e0b`) or numerical score for moderate caution sites.
      - `DANGER` (Red, `#ef4444`) or numerical score (80–100) for typosquats and drainers.
    - If a high/critical threat is detected, an automatic banner is injected across the top of the browser viewport alerting the user *before* they interact with the page.
-
-5. **Configurable Endpoint Gateway & Resilience (`scannerBridge.ts`):**
-   - The extension connects to a configurable API base URL (`http://localhost:3000` / `http://localhost:3001`), supporting custom gateway endpoints.
-   - If the backend is temporarily unreachable or offline, the extension executes local browser-safe fallback analysis using bundled rules and decoders (`rulesEngine.ts`, `txDecoder.ts`, `claimChecker.ts`), ensuring zero interruption in protection.
 
 ---
 

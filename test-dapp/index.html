@@ -717,6 +717,10 @@
         });
         addLog('❌ Failed: Invalid address was unexpectedly accepted without validation error!', 'log-blocked');
       } catch (err) {
+        addLog('🛡️ SUCCESS: ChainShield validation guard caught malformed address before forwarding! Error: ' + err.message, 'log-proceeded');
+      }
+    });
+
     // TEST 7: Uniswap Multicall / Swap Simulation
     document.getElementById('btn-uniswap-swap').addEventListener('click', async () => {
       const fromAddr = await getActiveSenderAddress();
