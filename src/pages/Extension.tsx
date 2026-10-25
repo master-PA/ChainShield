@@ -225,8 +225,8 @@ export const Extension: React.FC<{ navigate: (route: string) => void }> = ({ nav
                       await (window as any).ethereum.request({
                         method: 'eth_sendTransaction',
                         params: [{
-                          from: '0x71C84167F30831956453773266292494',
-                          to: '0x71C84167F30831956453773266292494',
+                          from: (window as any).ethereum.selectedAddress || '0x71C84167F30831956453773266292494e8B68112',
+                          to: '0x71C84167F30831956453773266292494e8B68112',
                           value: '0x0',
                           data: '0x',
                         }],

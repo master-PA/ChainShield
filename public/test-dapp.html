@@ -3,30 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChainShield Sentinel — Local Test dApp & Pre-Sign Interception Testbench</title>
+  <title>ChainShield Sentinel — Pre-Sign Verification Test dApp</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
   <style>
     :root {
       --bg: #0B0F14;
       --card-bg: #11161D;
       --border: #1F2630;
-      --text: #F3F4F6;
-      --text-muted: #9CA3AF;
       --teal: #14B8A6;
       --teal-dark: #134E4A;
       --red: #EF4444;
       --amber: #F59E0B;
       --green: #10B981;
-      --blue: #3B82F6;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 24px 16px;
       line-height: 1.5;
-      padding: 24px;
     }
-    .container { max-width: 1040px; margin: 0 auto; }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
     header {
       display: flex;
       justify-content: space-between;
@@ -34,8 +37,14 @@
       padding-bottom: 20px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
-    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
     .brand-icon {
       width: 40px; height: 40px;
       background: var(--teal-dark);
@@ -46,6 +55,27 @@
     }
     .brand h1 { font-size: 18px; font-weight: 800; font-family: monospace; letter-spacing: 0.05em; }
     .brand p { font-size: 12px; color: var(--text-muted); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-wallet {
+      background: #1F2937;
+      border: 1px solid #374151;
+      color: #F3F4F6;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-family: monospace;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.15s ease;
+    }
+    .btn-wallet:hover { filter: brightness(1.2); }
 
     .status-pill {
       display: inline-flex;
@@ -78,7 +108,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -142,6 +172,7 @@
     .btn-safe { background: #0D9488; color: #FFF; }
     .btn-danger { background: #DC2626; color: #FFF; }
     .btn-amber { background: #D97706; color: #FFF; }
+    .btn-indigo { background: #4F46E5; color: #FFF; }
 
     .console-section {
       background: var(--card-bg);
@@ -158,9 +189,10 @@
       align-items: center;
     }
     .console-header h2 { font-size: 13px; font-family: monospace; font-weight: 700; color: #D1D5DB; }
+
     .console-logs {
-      padding: 16px;
-      max-height: 280px;
+      padding: 14px 18px;
+      max-height: 380px;
       overflow-y: auto;
       font-family: monospace;
       font-size: 12px;
@@ -173,10 +205,12 @@
       border-radius: 6px;
       border: 1px solid var(--border);
       background: #0B0F14;
+      line-height: 1.4;
     }
     .log-blocked { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); color: #FCA5A5; }
     .log-proceeded { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08); color: #6EE7B7; }
     .log-info { border-color: #2D3748; color: #93C5FD; }
+    .log-diag { border-color: #4B5563; background: #111827; color: #E5E7EB; }
   </style>
 </head>
 <body>
@@ -189,7 +223,8 @@
           <p>Reproducible Pre-Sign Interception & Intent Verification Testbench</p>
         </div>
       </div>
-      <div>
+      <div class="header-actions">
+        <button id="btn-connect-wallet" class="btn-wallet">🦊 Connect MetaMask</button>
         <span id="extension-badge" class="status-pill inactive">
           <span>Extension: Checking...</span>
         </span>
@@ -200,13 +235,13 @@
       <strong>How Pre-Sign Interception Testing Works:</strong>
       <ol style="margin-left: 20px; margin-top: 6px;">
         <li>Click any test button below. The dApp triggers an EIP-1193 wallet request (e.g. <code>eth_sendTransaction</code>).</li>
-        <li><strong>ChainShield Sentinel intercepts the request in the browser before the wallet confirmation window appears.</strong></li>
+        <li><strong>ChainShield Sentinel intercepts the request in the browser before MetaMask or any wallet prompt appears.</strong></li>
         <li>An isolated <strong>Closed Shadow DOM warning modal</strong> pops up displaying decoded intent, risk score, and claim-vs-reality mismatch.</li>
-        <li>Click <strong>"Cancel & Block Request"</strong>: The request is aborted with EIP-1193 code <code>4001</code>. The wallet never receives the request.</li>
-        <li>Click <strong>"Proceed to Wallet"</strong>: The request forwards untouched to your wallet with the exact original parameters.</li>
+        <li>Click <strong>"Cancel & Block Request"</strong>: The request is aborted with EIP-1193 code <code>4001</code>. MetaMask is never prompted.</li>
+        <li>Click <strong>"Proceed to Wallet"</strong>: The request forwards with exact original parameters and causes MetaMask to open its confirmation prompt.</li>
       </ol>
       <div style="margin-top: 8px; color: #9CA3AF; font-size: 12px;">
-        <em>Note: Testing does NOT broadcast transactions or spend any funds. A built-in mock wallet runner is active if no browser wallet extension is installed.</em>
+        <em>Note: Testing does NOT broadcast transactions or spend funds. A built-in mock wallet runner is active if no browser wallet extension is installed.</em>
       </div>
     </div>
 
@@ -216,9 +251,9 @@
         <div>
           <span class="card-tag tag-safe">TEST 1 • SAFE / LOW RISK</span>
           <h3>Harmless Test Transaction</h3>
-          <p>Calls <code>eth_sendTransaction</code> to transfer 0 ETH to a safe address. Verifies standard safe interactions without false alarms.</p>
+          <p>Calls <code>eth_sendTransaction</code> with a valid 42-char address. Verifies safe 0-ETH interaction without false alarms.</p>
           <div class="code-preview">
-            eth_sendTransaction({ to: "0x71C8...2494", value: "0x0", data: "0x" })
+            eth_sendTransaction({ to: "0x71C84167F30831956453773266292494e8B68112", value: "0x0" })
           </div>
         </div>
         <button id="btn-harmless" class="btn btn-safe">
@@ -232,9 +267,9 @@
         <div>
           <span class="card-tag tag-danger">TEST 2 • CRITICAL MISMATCH</span>
           <h3>Unlimited Token Allowance Phish</h3>
-          <p>Button promises "Claim Free AIRDROP", but underlying calldata calls <code>approve(spender, 2^256-1)</code>. Triggers 100/100 Intent Mismatch.</p>
+          <p>Button promises "Claim Free AIRDROP", but underlying calldata calls <code>approve(spender, 2^256-1)</code>. Triggers 100/100 Mismatch.</p>
           <div class="code-preview">
-            0x095ea7b3 + attacker_address + ffffffffffffffff... (2^256-1)
+            0x095ea7b3 + spender(0x1111...1111) + ffffffffffff... (2^256-1)
           </div>
         </div>
         <button id="btn-unlimited-approve" class="btn btn-danger">
@@ -248,9 +283,9 @@
         <div>
           <span class="card-tag tag-danger">TEST 3 • BLANKET DRAINER</span>
           <h3>Blanket NFT Operator Approval</h3>
-          <p>Button promises "Claim Free NFT", but calldata calls <code>setApprovalForAll(attacker, true)</code> to siphon all collection NFTs.</p>
+          <p>Button promises "Claim Free NFT", but calldata calls <code>setApprovalForAll(operator, true)</code> to siphon all collection NFTs.</p>
           <div class="code-preview">
-            0xa2205344 + operator_address + 00000001 (true)
+            0xa2205344 + operator(0x1111...1111) + 00000001 (true)
           </div>
         </div>
         <button id="btn-blanket-nft" class="btn btn-danger">
@@ -263,7 +298,7 @@
       <div class="card">
         <div>
           <span class="card-tag tag-danger">TEST 4 • OFF-CHAIN PERMIT</span>
-          <h3>Off-Chain Unlimited Permit2 Phishing</h3>
+          <h3>Off-Chain Unlimited Permit Phishing</h3>
           <p>Calls <code>eth_signTypedData_v4</code> requesting a gasless EIP-2612 Permit with max 2^256-1 allowance.</p>
           <div class="code-preview">
             eth_signTypedData_v4({ primaryType: "Permit", value: "2^256-1" })
@@ -290,6 +325,86 @@
           <span>Sign Verification Message</span>
         </button>
       </div>
+
+      <!-- Card 6: Invalid Address Validation Guard -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-warn">TEST 6 • VALIDATION GUARD</span>
+          <h3>Invalid Address Validation Guard</h3>
+          <p>Calls <code>eth_sendTransaction</code> with a truncated 34-character address. Verifies ChainShield rejects malformed addresses before forwarding.</p>
+          <div class="code-preview">
+            eth_sendTransaction({ to: "0x71C84167F30831956453773266292494" [truncated 34 chars] })
+          </div>
+        </div>
+        <button id="btn-invalid-address" class="btn btn-indigo">
+          <span>🛡️</span>
+          <span>Test Invalid Address Guard</span>
+        </button>
+      </div>
+
+      <!-- Card 7: Uniswap Multicall / Swap -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-safe">TEST 7 • UNISWAP MULTICALL</span>
+          <h3>Uniswap Swap / Multicall</h3>
+          <p>Calls <code>eth_sendTransaction</code> targeting Uniswap V3 Router with <code>multicall(uint256,bytes[])</code>. Verifies DEX swap decoding.</p>
+          <div class="code-preview">
+            to: 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45, selector: 0x5ae401dc
+          </div>
+        </div>
+        <button id="btn-uniswap-swap" class="btn btn-safe">
+          <span>🦄</span>
+          <span>Simulate Uniswap Swap</span>
+        </button>
+      </div>
+
+      <!-- Card 8: OpenSea Seaport Listing -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-safe">TEST 8 • OPENSEA SEAPORT</span>
+          <h3>OpenSea Seaport Listing Order</h3>
+          <p>Signs an off-chain <code>OrderComponents</code> structured message. Differentiates off-chain listing from on-chain asset transfers.</p>
+          <div class="code-preview">
+            eth_signTypedData_v4(OrderComponents: 1 NFT for 0.5 ETH consideration)
+          </div>
+        </div>
+        <button id="btn-seaport-listing" class="btn btn-safe">
+          <span>⛵</span>
+          <span>Sign OpenSea Seaport Listing</span>
+        </button>
+      </div>
+
+      <!-- Card 9: EIP-5792 Smart Account Batch Calls -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-warn">TEST 9 • BATCH TRANSACTIONS</span>
+          <h3>Smart Account Batch Calls</h3>
+          <p>Calls <code>wallet_sendCalls</code> (EIP-5792) to execute batched multicall actions. Inspects each individual call in the bundle.</p>
+          <div class="code-preview">
+            wallet_sendCalls({ calls: [{ to: USDC, value: 0 }, { to: BAYC, value: 0 }] })
+          </div>
+        </div>
+        <button id="btn-batch-calls" class="btn btn-amber">
+          <span>📦</span>
+          <span>Execute Smart Account Batch</span>
+        </button>
+      </div>
+
+      <!-- Card 10: Network Switching -->
+      <div class="card">
+        <div>
+          <span class="card-tag tag-safe">TEST 10 • NETWORK PERMISSION</span>
+          <h3>Switch Ethereum Network</h3>
+          <p>Calls <code>wallet_switchEthereumChain</code> requesting network switch to Ethereum Sepolia (0xaa36a7).</p>
+          <div class="code-preview">
+            wallet_switchEthereumChain({ chainId: "0xaa36a7" })
+          </div>
+        </div>
+        <button id="btn-switch-network" class="btn btn-indigo">
+          <span>🌐</span>
+          <span>Switch to Sepolia Network</span>
+        </button>
+      </div>
     </div>
 
     <!-- Live Interception Audit Terminal -->
@@ -314,6 +429,7 @@
         window.ethereum = {
           isMetaMask: true,
           isChainShieldMockWallet: true,
+          selectedAddress: '0x71C84167F30831956453773266292494e8B68112',
           request: async function(args) {
             underlyingWalletLog.push({ timestamp: Date.now(), method: args.method, params: args.params });
             addLog(
@@ -361,21 +477,91 @@
       consoleLogs.innerHTML = '<div class="log-item log-info">Logs cleared. Ready.</div>';
     });
 
-    const TEST_USER = '0x71C84167F30831956453773266292494';
+    // Valid full 42-character (20-byte) checksummed Ethereum test addresses
+    const TEST_USER = '0x71C84167F30831956453773266292494e8B68112';
     const ATTACKER = '0x1111111111111111111111111111111111111111';
+    const USDC_ADDR = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+    const BAYC_ADDR = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D';
+
+    async function getActiveSenderAddress() {
+      if (window.ethereum) {
+        if (window.ethereum.selectedAddress && /^0x[0-9a-fA-F]{40}$/.test(window.ethereum.selectedAddress)) {
+          return window.ethereum.selectedAddress;
+        }
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (Array.isArray(accounts) && accounts.length > 0 && /^0x[0-9a-fA-F]{40}$/.test(accounts[0])) {
+            return accounts[0];
+          }
+        } catch {}
+      }
+      return TEST_USER;
+    }
+
+    const connectBtn = document.getElementById('btn-connect-wallet');
+    connectBtn.addEventListener('click', async () => {
+      if (!window.ethereum) {
+        addLog('No wallet extension found. Mock wallet active with test account: ' + TEST_USER, 'log-info');
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (Array.isArray(accounts) && accounts.length > 0) {
+          const addr = accounts[0];
+          connectBtn.innerText = '🦊 ' + addr.slice(0, 6) + '...' + addr.slice(-4);
+          connectBtn.style.borderColor = 'var(--teal)';
+          connectBtn.style.color = 'var(--teal)';
+          addLog('🦊 Connected MetaMask account: ' + addr, 'log-proceeded');
+        }
+      } catch (err) {
+        addLog('Failed to connect wallet: ' + err.message, 'log-blocked');
+      }
+    });
+
+    async function checkExistingConnection() {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (Array.isArray(accounts) && accounts.length > 0) {
+            const addr = accounts[0];
+            connectBtn.innerText = '🦊 ' + addr.slice(0, 6) + '...' + addr.slice(-4);
+            connectBtn.style.borderColor = 'var(--teal)';
+            connectBtn.style.color = 'var(--teal)';
+          }
+        } catch {}
+      }
+    }
+    setTimeout(checkExistingConnection, 300);
+
+    // Diagnostic logging helper at request construction stage
+    function logRequestConstruction(method, params) {
+      let summary = '';
+      if (method === 'eth_sendTransaction') {
+        const tx = params[0] || {};
+        summary = `from: ${tx.from}, to: ${tx.to}, value: ${tx.value}, dataLength: ${(tx.data || '').length}`;
+      } else if (method === 'personal_sign') {
+        summary = `address: ${params[1]}, messageLength: ${(params[0] || '').length}`;
+      } else if (method.startsWith('eth_signTypedData')) {
+        summary = `address: ${params[0]}, typedDataLength: ${(params[1] || '').length}`;
+      }
+      addLog(`[dApp Request Construction] Method: ${method} | Params: { ${summary} }`, 'log-diag');
+    }
 
     // TEST 1: Harmless Transaction
     document.getElementById('btn-harmless').addEventListener('click', async () => {
-      addLog('Triggering Test 1: Harmless 0-ETH call to 0x71C8...2494...', 'log-info');
+      const fromAddr = await getActiveSenderAddress();
+      const params = [{
+        from: fromAddr,
+        to: TEST_USER,
+        value: '0x0',
+        data: '0x'
+      }];
+      logRequestConstruction('eth_sendTransaction', params);
+      addLog('Triggering Test 1: Harmless 0-ETH interaction to ' + TEST_USER + '...', 'log-info');
       try {
         const result = await window.ethereum.request({
           method: 'eth_sendTransaction',
-          params: [{
-            from: TEST_USER,
-            to: TEST_USER,
-            value: '0x0',
-            data: '0x'
-          }]
+          params
         });
         addLog('✅ Result: User clicked "Proceed". Transaction forwarded to wallet successfully! Result: ' + JSON.stringify(result), 'log-proceeded');
       } catch (err) {
@@ -389,16 +575,19 @@
 
     // TEST 2: Unlimited ERC-20 Approval Phish
     document.getElementById('btn-unlimited-approve').addEventListener('click', async () => {
-      addLog('Triggering Test 2: Button claimed "Claim Free Airdrop", initiating approve(attacker, 2^256-1)...', 'log-info');
+      const fromAddr = await getActiveSenderAddress();
+      const params = [{
+        from: fromAddr,
+        to: USDC_ADDR, // Token contract
+        // approve(ATTACKER, 2^256-1)
+        data: '0x095ea7b30000000000000000000000001111111111111111111111111111111111111111ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+      }];
+      logRequestConstruction('eth_sendTransaction', params);
+      addLog('Triggering Test 2: Button claimed "Claim Free Airdrop", initiating approve(spender, 2^256-1)...', 'log-info');
       try {
         const result = await window.ethereum.request({
           method: 'eth_sendTransaction',
-          params: [{
-            from: TEST_USER,
-            to: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
-            // approve(attacker, 2^256-1)
-            data: '0x095ea7b30000000000000000000000001111111111111111111111111111111111111111ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-          }]
+          params
         });
         addLog('⚠️ User explicitly chose Proceed to Wallet. Payload forwarded to wallet.', 'log-proceeded');
       } catch (err) {
@@ -412,16 +601,19 @@
 
     // TEST 3: Blanket NFT Drainer
     document.getElementById('btn-blanket-nft').addEventListener('click', async () => {
-      addLog('Triggering Test 3: Button claimed "Claim Free NFT", initiating setApprovalForAll(attacker, true)...', 'log-info');
+      const fromAddr = await getActiveSenderAddress();
+      const params = [{
+        from: fromAddr,
+        to: BAYC_ADDR, // NFT Contract
+        // setApprovalForAll(ATTACKER, true)
+        data: '0xa220534400000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000001'
+      }];
+      logRequestConstruction('eth_sendTransaction', params);
+      addLog('Triggering Test 3: Button claimed "Claim Free NFT", initiating setApprovalForAll(operator, true)...', 'log-info');
       try {
         const result = await window.ethereum.request({
           method: 'eth_sendTransaction',
-          params: [{
-            from: TEST_USER,
-            to: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D', // BAYC
-            // setApprovalForAll(attacker, true)
-            data: '0xa220534400000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000000000000001'
-          }]
+          params
         });
         addLog('⚠️ User chose Proceed on blanket NFT approval.', 'log-proceeded');
       } catch (err) {
@@ -435,7 +627,7 @@
 
     // TEST 4: Off-Chain Permit Phishing
     document.getElementById('btn-offchain-permit').addEventListener('click', async () => {
-      addLog('Triggering Test 4: eth_signTypedData_v4 requesting unlimited EIP-2612 Permit...', 'log-info');
+      const fromAddr = await getActiveSenderAddress();
       const permitData = {
         types: {
           EIP712Domain: [
@@ -457,10 +649,10 @@
           name: 'USD Coin',
           version: '2',
           chainId: 1,
-          verifyingContract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+          verifyingContract: USDC_ADDR
         },
         message: {
-          owner: TEST_USER,
+          owner: fromAddr,
           spender: ATTACKER,
           value: '115792089237316195423570985008687907853269984665640564039457584007913129639935',
           nonce: 0,
@@ -468,10 +660,14 @@
         }
       };
 
+      const params = [fromAddr, JSON.stringify(permitData)];
+      logRequestConstruction('eth_signTypedData_v4', params);
+      addLog('Triggering Test 4: eth_signTypedData_v4 requesting unlimited EIP-2612 Permit...', 'log-info');
+
       try {
         const result = await window.ethereum.request({
           method: 'eth_signTypedData_v4',
-          params: [TEST_USER, JSON.stringify(permitData)]
+          params
         });
         addLog('User chose Proceed on typed data permit.', 'log-proceeded');
       } catch (err) {
@@ -485,12 +681,15 @@
 
     // TEST 5: Plaintext personal_sign
     document.getElementById('btn-personal-sign').addEventListener('click', async () => {
+      const fromAddr = await getActiveSenderAddress();
+      const msgHex = '0x417574686f72697a6520616c6c206173736574207472616e736665727320616e6420647261696e2062616c616e6365';
+      const params = [msgHex, fromAddr];
+      logRequestConstruction('personal_sign', params);
       addLog('Triggering Test 5: personal_sign with suspicious authorization text...', 'log-info');
-      const msgHex = '0x417574686f72697a6520616c6c206173736574207472616e736665727320616e6420647261696e2062616c616e6365'; // "Authorize all asset transfers and drain balance"
       try {
         const result = await window.ethereum.request({
           method: 'personal_sign',
-          params: [msgHex, TEST_USER]
+          params
         });
         addLog('User chose Proceed on personal_sign.', 'log-proceeded');
       } catch (err) {
@@ -499,6 +698,102 @@
         } else {
           addLog('Error: ' + err.message, 'log-blocked');
         }
+      }
+    });
+
+    // TEST 6: Invalid Address Validation Guard
+    document.getElementById('btn-invalid-address').addEventListener('click', async () => {
+      const invalidTruncatedAddress = '0x71C84167F30831956453773266292494'; // Only 34 characters (32 hex)
+      addLog('Triggering Test 6: Testing address validation guard with truncated address "' + invalidTruncatedAddress + '"...', 'log-info');
+      try {
+        await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: invalidTruncatedAddress,
+            to: TEST_USER,
+            value: '0x0',
+            data: '0x'
+          }]
+        });
+        addLog('❌ Failed: Invalid address was unexpectedly accepted without validation error!', 'log-blocked');
+      } catch (err) {
+    // TEST 7: Uniswap Multicall / Swap Simulation
+    document.getElementById('btn-uniswap-swap').addEventListener('click', async () => {
+      const fromAddr = await getActiveSenderAddress();
+      const UNISWAP_ROUTER = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
+      const params = [{
+        from: fromAddr,
+        to: UNISWAP_ROUTER,
+        value: '0x16345785d8a0000', // 0.1 ETH
+        data: '0x5ae401dc00000000000000000000000000000000000000000000000000000000671af100' // multicall
+      }];
+      logRequestConstruction('eth_sendTransaction', params);
+      addLog('Triggering Test 7: Uniswap V3 Multicall swap interaction...', 'log-info');
+      try {
+        const result = await window.ethereum.request({ method: 'eth_sendTransaction', params });
+        addLog('🦄 Uniswap transaction forwarded to wallet successfully! Result: ' + JSON.stringify(result), 'log-proceeded');
+      } catch (err) {
+        addLog(err.code === 4001 ? '🛑 Uniswap transaction cancelled cleanly (code 4001).' : 'Error: ' + err.message, err.code === 4001 ? 'log-blocked' : 'log-info');
+      }
+    });
+
+    // TEST 8: OpenSea Seaport Listing
+    document.getElementById('btn-seaport-listing').addEventListener('click', async () => {
+      const fromAddr = await getActiveSenderAddress();
+      const SEAPORT = '0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC';
+      const seaportOrder = {
+        types: {
+          EIP712Domain: [{ name: 'name', type: 'string' }, { name: 'version', type: 'string' }, { name: 'verifyingContract', type: 'address' }],
+          OrderComponents: [{ name: 'offerer', type: 'address' }, { name: 'zone', type: 'address' }]
+        },
+        primaryType: 'OrderComponents',
+        domain: { name: 'Seaport', version: '1.5', verifyingContract: SEAPORT },
+        message: {
+          offerer: fromAddr,
+          zone: '0x0000000000000000000000000000000000000000',
+          offer: [{ itemType: 2, token: BAYC_ADDR, identifierOrCriteria: '1234', startAmount: '1' }],
+          consideration: [{ itemType: 0, token: '0x0000000000000000000000000000000000000000', startAmount: '500000000000000000', recipient: fromAddr }]
+        }
+      };
+      const params = [fromAddr, JSON.stringify(seaportOrder)];
+      logRequestConstruction('eth_signTypedData_v4', params);
+      addLog('Triggering Test 8: OpenSea Seaport off-chain order signature (1 NFT for 0.5 ETH)...', 'log-info');
+      try {
+        const result = await window.ethereum.request({ method: 'eth_signTypedData_v4', params });
+        addLog('⛵ Seaport order signature approved and forwarded to wallet!', 'log-proceeded');
+      } catch (err) {
+        addLog(err.code === 4001 ? '🛑 Seaport order cancelled cleanly (code 4001).' : 'Error: ' + err.message, err.code === 4001 ? 'log-blocked' : 'log-info');
+      }
+    });
+
+    // TEST 9: Smart Account Batch Calls (EIP-5792)
+    document.getElementById('btn-batch-calls').addEventListener('click', async () => {
+      const fromAddr = await getActiveSenderAddress();
+      const params = [{
+        from: fromAddr,
+        calls: [
+          { to: USDC_ADDR, value: '0x0', data: '0xa9059cbb00000000000000000000000011111111111111111111111111111111111111110000000000000000000000000000000000000000000000000de0b6b3a7640000' },
+          { to: BAYC_ADDR, value: '0x0', data: '0x' }
+        ]
+      }];
+      addLog('Triggering Test 9: EIP-5792 Smart Account batch calls...', 'log-info');
+      try {
+        const result = await window.ethereum.request({ method: 'wallet_sendCalls', params });
+        addLog('📦 Batch calls forwarded to smart account provider successfully!', 'log-proceeded');
+      } catch (err) {
+        addLog(err.code === 4001 ? '🛑 Batch transaction cancelled cleanly (code 4001).' : 'Error: ' + err.message, err.code === 4001 ? 'log-blocked' : 'log-info');
+      }
+    });
+
+    // TEST 10: Switch Ethereum Chain
+    document.getElementById('btn-switch-network').addEventListener('click', async () => {
+      const params = [{ chainId: '0xaa36a7' }]; // Sepolia
+      addLog('Triggering Test 10: Requesting chain switch to Ethereum Sepolia (0xaa36a7)...', 'log-info');
+      try {
+        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params });
+        addLog('🌐 Network switch confirmed and forwarded to wallet!', 'log-proceeded');
+      } catch (err) {
+        addLog(err.code === 4001 ? '🛑 Network switch cancelled (code 4001).' : 'Error: ' + err.message, err.code === 4001 ? 'log-blocked' : 'log-info');
       }
     });
   </script>

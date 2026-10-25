@@ -5,7 +5,7 @@ import { InterceptRequestPayload, ThreatLogItem } from '../shared/types';
 
 /**
  * ChainShield Sentinel Content Script
- * Injects in-page provider wrapper and manages pre-sign modals & threat banners.
+ * Injects in-page provider wrapper and manages Central Security Gate & pre-sign modals.
  */
 
 // 1. Inject inpage.js into the main execution context
@@ -34,7 +34,7 @@ async function evaluateCurrentPage() {
     const currentUrl = window.location.href;
     const hostname = window.location.hostname;
 
-    // Skip chrome internal or empty hosts
+    // Skip internal browser protocols or empty hosts
     if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') {
       return;
     }
@@ -73,7 +73,7 @@ if (document.readyState === 'loading') {
   evaluateCurrentPage();
 }
 
-// 3. Listen for EIP-1193 pre-sign requests from inpage.js
+// 3. Central Security Gate: Listen for EIP-1193 pre-sign requests from inpage.js
 window.addEventListener('message', async (event: MessageEvent) => {
   if (
     event.source !== window ||
@@ -96,7 +96,7 @@ window.addEventListener('message', async (event: MessageEvent) => {
     }
 
     const isWhitelisted = await isDomainWhitelisted(window.location.hostname);
-    const analysis = analyzePreSignRequest(payload);
+    const analysis = analyzePreSignRequest(payload, { strictMode: settings.strictMode });
 
     // Log event in threat history
     const logItem: ThreatLogItem = {
@@ -112,15 +112,36 @@ window.addEventListener('message', async (event: MessageEvent) => {
       mismatchExplanation: analysis.mismatch?.explanation,
     };
 
-    // If whitelisted and risk is LOW, proceed without blocking
-    if (isWhitelisted && analysis.riskLevel === 'LOW') {
-      respondToInpage(requestId, 'PROCEED');
-      logItem.actionTaken = 'PROCEEDED';
+    // Central Security Gate: Enforce Decision (ALLOW | WARN | BLOCK)
+
+    // Outcome 1: BLOCK (Fail-Closed: Confirmed Malicious, Zero-Consideration Drainer, or High Risk)
+    if (analysis.securityGateDecision === 'BLOCK') {
+      logItem.actionTaken = 'BLOCKED';
       await logThreatItem(logItem);
+
+      showThreatBanner(
+        window.location.hostname,
+        analysis.riskScore,
+        `BLOCKED: ${analysis.recommendationText}`
+      );
+
+      respondToInpage(
+        requestId,
+        'BLOCK',
+        `Transaction blocked by ChainShield Sentinel Security Gate: ${analysis.recommendationText}`
+      );
       return;
     }
 
-    // Display Pre-Sign Modal
+    // Outcome 2: ALLOW (Safe low-impact call, or whitelisted domain with low risk)
+    if (analysis.securityGateDecision === 'ALLOW' && isWhitelisted) {
+      logItem.actionTaken = 'PROCEEDED';
+      await logThreatItem(logItem);
+      respondToInpage(requestId, 'PROCEED');
+      return;
+    }
+
+    // Outcome 3: WARN (Requires explicit user evaluation before proceeding to wallet)
     showPreSignModal(analysis, async (decision) => {
       logItem.actionTaken = decision === 'BLOCK' ? 'BLOCKED' : 'PROCEEDED';
       await logThreatItem(logItem);
@@ -128,11 +149,11 @@ window.addEventListener('message', async (event: MessageEvent) => {
       respondToInpage(
         requestId,
         decision,
-        decision === 'BLOCK' ? 'Transaction rejected by user via ChainShield Sentinel.' : undefined
+        decision === 'BLOCK' ? 'Transaction rejected by user via ChainShield Sentinel Security Gate.' : undefined
       );
     });
   } catch (err: any) {
-    console.error('[ChainShield ContentScript] Interception error:', err);
+    console.error('[ChainShield ContentScript] Security Gate evaluation error:', err);
     // On unexpected error, fail safe and allow proceeding so dApps aren't permanently locked
     respondToInpage(requestId, 'PROCEED');
   }

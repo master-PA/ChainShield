@@ -11,8 +11,11 @@ export function cleanHex(input: string): string {
 }
 
 export function parseAddressFrom32Bytes(chunk: string): string {
-  const clean = chunk.replace(/^0+/, '');
-  return '0x' + clean.padStart(40, '0').toLowerCase();
+  if (!chunk) return '0x0000000000000000000000000000000000000000';
+  const raw = chunk.trim();
+  const hexPart = raw.startsWith('0x') || raw.startsWith('0X') ? raw.slice(2) : raw;
+  const addressPart = hexPart.length >= 40 ? hexPart.slice(-40) : hexPart.padStart(40, '0');
+  return ('0x' + addressPart).toLowerCase();
 }
 
 export function decodeTransactionCalldata(calldata: string, contractAddress?: string): IntentSummary {
@@ -66,7 +69,7 @@ export function decodeTransactionCalldata(calldata: string, contractAddress?: st
     };
   }
 
-  // 2. setApprovalForAll(address operator, bool approved) - selector 0xa2205344
+  // 2. setApprovalForAll(address operator, bool approved) - selector 0xa2205344 (ERC-721 and ERC-1155)
   if (selector === '0xa2205344' && params.length >= 128) {
     const operatorChunk = params.slice(0, 64);
     const approvedChunk = params.slice(64, 128);
@@ -133,7 +136,44 @@ export function decodeTransactionCalldata(calldata: string, contractAddress?: st
     };
   }
 
-  // 5. permit (EIP-2612) - selector 0xd505accf
+  // 5. ERC-721 safeTransferFrom(address from, address to, uint256 tokenId) - selector 0x42842e0e
+  if (selector === '0x42842e0e' && params.length >= 192) {
+    const to = parseAddressFrom32Bytes(params.slice(64, 128));
+    const tokenIdBig = BigInt('0x' + (params.slice(128, 192) || '0'));
+    return {
+      actionType: 'safeTransferFrom',
+      plainEnglish: `Transfers ERC-721 NFT Token #${tokenIdBig.toString()} to ${to.slice(0, 6)}...${to.slice(-4)}.`,
+      plainHinglish: `NFT Token #${tokenIdBig.toString()} ko ${to.slice(0, 6)}... par transfer kar raha hai.`,
+      plainSimple: `Sending NFT #${tokenIdBig.toString()} to recipient.`,
+      targetSpender: to,
+      spenderLabel: 'NFT Recipient',
+      assetName: `ERC-721 NFT #${tokenIdBig.toString()}`,
+      amountOrScope: `Token ID ${tokenIdBig.toString()}`,
+      isUnlimited: false,
+      contractVerified: false,
+    };
+  }
+
+  // 6. ERC-1155 safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data) - selector 0xf242432a
+  if (selector === '0xf242432a' && params.length >= 256) {
+    const to = parseAddressFrom32Bytes(params.slice(64, 128));
+    const idBig = BigInt('0x' + (params.slice(128, 192) || '0'));
+    const amountBig = BigInt('0x' + (params.slice(192, 256) || '0'));
+    return {
+      actionType: 'safeTransferFrom',
+      plainEnglish: `Transfers ${amountBig.toString()} units of ERC-1155 Token ID #${idBig.toString()} to ${to.slice(0, 6)}...${to.slice(-4)}.`,
+      plainHinglish: `ERC-1155 Token #${idBig.toString()} ke ${amountBig.toString()} units transfer kar raha hai.`,
+      plainSimple: `Sending ${amountBig.toString()} items of Token #${idBig.toString()}.`,
+      targetSpender: to,
+      spenderLabel: 'ERC-1155 Recipient',
+      assetName: `ERC-1155 Item #${idBig.toString()}`,
+      amountOrScope: `${amountBig.toString()} units`,
+      isUnlimited: false,
+      contractVerified: false,
+    };
+  }
+
+  // 7. permit (EIP-2612) - selector 0xd505accf
   if (selector === '0xd505accf') {
     return {
       actionType: 'permit',
@@ -145,6 +185,68 @@ export function decodeTransactionCalldata(calldata: string, contractAddress?: st
       assetName: 'ERC-20 Gasless Permit',
       amountOrScope: 'Off-chain Signature Authorization',
       isUnlimited: true,
+      contractVerified: false,
+    };
+  }
+
+  // 8. Uniswap / Universal Router & Multicall
+  if (selector === '0x5ae401dc' || selector === '0xac9650d8') {
+    return {
+      actionType: 'multicall',
+      plainEnglish: 'Executes bundled batched transactions (multicall) on a decentralized exchange router.',
+      plainHinglish: 'DEX router par batched multicall transaction execute kar raha hai.',
+      plainSimple: 'Executing a batch of swap or liquidity operations on a decentralized exchange.',
+      targetSpender: contractAddress || '0x0000000000000000000000000000000000000000',
+      spenderLabel: 'Uniswap / DEX Router',
+      assetName: 'DEX Multicall',
+      amountOrScope: 'Batched Sub-calls',
+      isUnlimited: false,
+      contractVerified: false,
+    };
+  }
+
+  if (selector === '0x3593564c') {
+    return {
+      actionType: 'universal_router_execute',
+      plainEnglish: 'Executes Uniswap Universal Router commands for multi-token swaps and NFT purchases.',
+      plainHinglish: 'Uniswap Universal Router par swaps aur orders execute kar raha hai.',
+      plainSimple: 'Executing a multi-step token swap through Uniswap Universal Router.',
+      targetSpender: contractAddress || '0x0000000000000000000000000000000000000000',
+      spenderLabel: 'Uniswap Universal Router',
+      assetName: 'Uniswap Swap Commands',
+      amountOrScope: 'Universal Router Execution',
+      isUnlimited: false,
+      contractVerified: false,
+    };
+  }
+
+  if (selector === '0x38ed1739' || selector === '0x18cbafe5' || selector === '0x7ff36ab5') {
+    return {
+      actionType: 'swap',
+      plainEnglish: 'Executes a token swap transaction on an automated market maker pool.',
+      plainHinglish: 'AMM liquidity pool par token swap execute kar raha hai.',
+      plainSimple: 'Exchanging tokens on a decentralized exchange.',
+      targetSpender: contractAddress || '0x0000000000000000000000000000000000000000',
+      spenderLabel: 'DEX Swap Router',
+      assetName: 'Token Swap',
+      amountOrScope: 'AMM Swap',
+      isUnlimited: false,
+      contractVerified: false,
+    };
+  }
+
+  // 9. OpenSea Seaport fulfillOrder (0xb3a34c4c) / fulfillAdvancedOrder (0xe7acab24)
+  if (selector === '0xb3a34c4c' || selector === '0xe7acab24' || selector === '0xed98348a') {
+    return {
+      actionType: 'seaport_fulfill',
+      plainEnglish: 'Executes an OpenSea Seaport order settlement to buy or accept an NFT listing/offer on-chain.',
+      plainHinglish: 'OpenSea Seaport contract par NFT order fulfill/settle kar raha hai.',
+      plainSimple: 'Completing an NFT purchase or sale on OpenSea Seaport.',
+      targetSpender: contractAddress || '0x0000000000000000000000000000000000000000',
+      spenderLabel: 'OpenSea Seaport Protocol',
+      assetName: 'Seaport Marketplace Order',
+      amountOrScope: 'Marketplace Fulfillment',
+      isUnlimited: false,
       contractVerified: false,
     };
   }

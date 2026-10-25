@@ -203,33 +203,47 @@ A dedicated standalone test dApp is included at `test-dapp/index.html` and serve
 http://localhost:3000/test-dapp.html
 ```
 
-The test dApp provides 5 interactive test scenarios designed for reproducible security auditing **without requiring gas, testnet tokens, or actual transaction broadcasts**:
+The test dApp provides 10 interactive test scenarios designed for reproducible security auditing **without requiring gas, testnet tokens, or actual transaction broadcasts**:
 
 1. **Harmless Test Transaction (`eth_sendTransaction`)**:
    - Triggers a safe 0 ETH transfer (`data: '0x'`, `value: '0x0'`).
-   - ChainShield inspects the payload, flags it as **LOW (Score: 10)**, and presents the pre-sign modal.
-   - **Cancel Path:** User clicks *"🛑 Cancel & Block Request"*. The request is aborted immediately with EIP-1193 rejection error `code: 4001`. The underlying wallet is **never invoked**.
-   - **Proceed Path:** User clicks *"Proceed to Wallet"*. The extension forwards the exact, unmodified transaction parameters to the underlying wallet.
-2. **Simulated Unlimited Token Allowance Phish (`eth_sendTransaction`)**:
-   - Page button claims *"Claim 5,000 Free Airdrop Tokens"*.
+   - Central Security Gate evaluates: **`ALLOW` (Score: 10)**.
+   - **Cancel Path:** User clicks *"🛑 Cancel & Block Request"*. Aborted immediately with EIP-1193 rejection error `code: 4001`. Underlying wallet is **never invoked**.
+   - **Proceed Path:** User clicks *"Proceed to Wallet"*. Forwards exact, unmodified transaction parameters to the underlying wallet.
+2. **Unlimited Token Allowance Phish (`eth_sendTransaction`)**:
+   - Page button claims *"Claim 10,000 Free Airdrop Tokens"*.
    - Underlying calldata invokes `approve(spender, 2^256-1)` (`0x095ea7b3`).
-   - ChainShield detects the **CRITICAL Claim-vs-Reality Mismatch (Score: 100)** and warns that an unlimited allowance is being requested under the guise of an airdrop claim.
+   - Detects the **CRITICAL Claim-vs-Reality Mismatch (Score: 100)** and unlimited allowance warning.
 3. **Blanket NFT Operator Approval (`eth_sendTransaction`)**:
-   - Page button claims *"Claim Free Whitelist NFT"*.
+   - Page button claims *"Claim Free NFT"*.
    - Underlying calldata invokes `setApprovalForAll(attacker, true)` (`0xa2205344`).
-   - ChainShield flags the severe mismatch and warns that all collection NFTs are at risk of being drained.
+   - Flags the severe mismatch and warns that all collection NFTs are at risk of being drained.
 4. **Off-Chain Gasless Permit Phishing (`eth_signTypedData_v4`)**:
    - Requests an EIP-712 / EIP-2612 gasless `Permit` signature with `value: 2^256-1`.
-   - ChainShield parses the typed data struct, extracts the verifying contract, spender address, and unlimited value, and displays a **CRITICAL (Score: 86)** gasless drain warning.
+   - Parses typed data struct, extracts verifying contract, spender address, and unlimited value.
 5. **Suspicious Plaintext Signature (`personal_sign`)**:
-   - Requests a hex-encoded plaintext signature containing drainer verification wording (*"I agree to grant access to claim airdrop and approve all balance withdrawals"*).
-   - ChainShield decodes the hex payload to plaintext UTF-8, flags the malicious keyword triggers, and presents the decoded text in the modal.
+   - Requests a hex-encoded plaintext signature containing drainer verification wording (*"Authorize asset transfers and drain balance"*).
+   - Decodes hex to plaintext UTF-8, flags malicious keywords, and presents decoded text in the modal.
+6. **Invalid Address Validation Guard**:
+   - Validates that malformed or truncated addresses (e.g. 34 characters) are rejected before forwarding to the wallet provider, preventing `Invalid parameters: must provide an Ethereum address` crashes.
+7. **Uniswap Swap & Multicall Simulation (`eth_sendTransaction`)**:
+   - Simulates a Uniswap V3 Router `multicall` (`0x5ae401dc`) or Universal Router `execute` (`0x3593564c`).
+   - Deeply inspects DEX router target, swap commands, and value transfer.
+8. **OpenSea Seaport Listing Order (`eth_signTypedData_v4`)**:
+   - Signs an off-chain `OrderComponents` structured message.
+   - Differentiates off-chain marketplace listing from on-chain transfers; checks offer items vs consideration.
+   - Flags zero-consideration listing drainer attacks with immediate `BLOCK` gate outcome.
+9. **Smart Account Batch Calls (`wallet_sendCalls`)**:
+   - EIP-5792 batch transaction execution.
+   - Iterates across each sub-call in the batch and inspects allowances, recipients, and calldata.
+10. **Network Switching (`wallet_switchEthereumChain`)**:
+    - Validates target chain ID (e.g. Sepolia `0xaa36a7`) and prevents silent network diversion attacks.
 
-### Testing Without an Installed Wallet Extension
-The test dApp includes a built-in mock EIP-1193 wallet fallback. If no external wallet (MetaMask, Rabby, Coinbase) is installed, the test dApp automatically initializes a mock provider at `window.ethereum` and logs all intercepted/received calls in a live on-page terminal:
-- Confirms whether requests reached the underlying wallet.
-- Verifies that Cancel completely prevents requests from reaching the wallet.
-- Verifies that Proceed forwards exact unmodified parameters.
+### Central Security Gate Decisions
+- **`ALLOW`**: Harmless interactions on verified sites bypass blocking modals and pass through to wallet confirmation.
+- **`WARN`**: High-impact or suspicious requests (unlimited approvals, gasless permits, unverified callers) trigger the closed Shadow DOM pre-sign modal with full evidence before offering Proceed.
+- **`BLOCK`**: Confirmed drainer networks, zero-consideration Seaport exploits, or high-confidence phishing patterns are halted immediately with code `4001` before reaching the wallet.
+- **`DEGRADED MODE`**: If the scanner API is unreachable, local heuristics evaluate the request and an amber notice warns the user that contract source could not be verified on-chain.
 
 ### Browser-Specific Architecture & Limitations
 
@@ -239,6 +253,7 @@ The test dApp includes a built-in mock EIP-1193 wallet fallback. If no external 
 | **Multi-Provider Aggregation** | Modern wallets often inject into `window.ethereum.providers` (array of coexisting providers for MetaMask, Rabby, Coinbase Wallet, etc.). | `inpage.ts` iterates across `provider.providers` if present, wrapping `.request`, `.send`, and `.sendAsync` on all detected providers simultaneously. |
 | **EIP-6963 Provider Discovery** | dApps and modern wallets announce providers via `window.dispatchEvent(new CustomEvent('eip6963:announceProvider', ...))` | `inpage.ts` listens for `eip6963:announceProvider` and `ethereum#initialized` events, automatically wrapping newly announced provider instances. |
 | **Closed Shadow DOM Isolation** | `host.attachShadow({ mode: 'closed' })` ensures `host.shadowRoot === null` to host page scripts. | Prevents malicious dApp scripts from programmatically hiding the warning modal, overriding CSS styles, or dispatching synthetic click events to bypass user approval. |
+| **RequestQueueManager** | Concurrency tracking, deduplication of rapid clicks, 90-second bounded timeout. | Prevents race conditions, double-click forwarding, and stale request reuse. |
 | **Zero Silent Broadcast** | The extension never calls `sign`, `sendRawTransaction`, or any broadcast method. | The extension acts strictly as an inspection and gatekeeping proxy. It either returns code `4001` or delegates to the underlying wallet for real user signature. |
 
 ---

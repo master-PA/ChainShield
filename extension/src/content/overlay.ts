@@ -59,7 +59,7 @@ export function showPreSignModal(
       : 'rgba(16, 185, 129, 0.15)';
 
   const reasonsHtml = analysis.reasons
-    .slice(0, 4)
+    .slice(0, 5)
     .map(
       (r) => `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#0B0F14; border:1px solid #1F2630; border-radius:6px; font-size:11px; margin-bottom:5px;">
@@ -90,6 +90,88 @@ export function showPreSignModal(
       </div>
     </div>`
     : '';
+
+  // Degraded mode alert if scanner backend is unavailable
+  const degradedHtml = analysis.degradedMode
+    ? `
+    <div style="background:rgba(245, 158, 11, 0.12); border:1px solid rgba(245, 158, 11, 0.5); border-radius:8px; padding:10px; margin-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#FBBF24; text-transform:uppercase; font-family:monospace;">
+        <span>⚠️ DEGRADED MODE: Scanner Unavailable</span>
+      </div>
+      <div style="font-size:11px; color:#E5E7EB; margin-top:3px; line-height:1.4;">
+        External smart contract security API could not be reached. Local heuristic analysis was performed, but contract source code could not be verified on-chain.
+      </div>
+    </div>`
+    : '';
+
+  // Seaport Order details if present
+  const seaportHtml = analysis.seaportDetails
+    ? `
+    <div style="background:#0B0F14; border:1px solid ${analysis.seaportDetails.isZeroConsiderationRisk ? '#EF4444' : '#1F2630'}; border-radius:8px; padding:10px; margin-bottom:12px; font-size:11px; font-family:monospace;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:#A78BFA; font-weight:700;">OpenSea Seaport Order</span>
+        <span style="color:#9CA3AF;">Off-Chain Signature</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+        <span style="color:#6B7280;">Offered Items:</span>
+        <span style="color:#F3F4F6; font-weight:600;">${analysis.seaportDetails.offerCount} asset(s)</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+        <span style="color:#6B7280;">Consideration Received:</span>
+        <span style="color:${analysis.seaportDetails.isZeroConsiderationRisk ? '#F87171' : '#34D399'}; font-weight:600;">
+          ${analysis.seaportDetails.isZeroConsiderationRisk ? '0 (FREE GIVEAWAY / DRAINER)' : `${analysis.seaportDetails.considerationCount} item(s)`}
+        </span>
+      </div>
+      <div style="font-size:10px; color:#9CA3AF; margin-top:4px;">
+        ℹ️ Note: This signs an off-chain listing or offer. It does not transfer tokens or approve contracts on-chain immediately.
+      </div>
+    </div>`
+    : '';
+
+  // Batch calls if present
+  const batchCallsHtml =
+    analysis.batchCalls && analysis.batchCalls.length > 0
+      ? `
+    <div style="background:#0B0F14; border:1px solid #1F2630; border-radius:8px; padding:10px; margin-bottom:12px; font-size:11px; font-family:monospace;">
+      <div style="color:#60A5FA; font-weight:700; margin-bottom:6px;">Smart Account Batched Calls (${analysis.batchCalls.length})</div>
+      ${analysis.batchCalls
+        .slice(0, 3)
+        .map(
+          (c, idx) => `
+        <div style="padding:4px 0; border-top:${idx > 0 ? '1px solid #1F2630' : 'none'}; font-size:10px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#9CA3AF;">Call #${idx + 1} Target:</span>
+            <span style="color:#93C5FD;">${shortenAddress(c.to)}</span>
+          </div>
+          <div style="color:${c.isUnlimited ? '#F87171' : '#D1D5DB'}; margin-top:2px;">
+            ${escapeHtml(c.decodedIntent || 'Custom Call')}
+          </div>
+        </div>`
+        )
+        .join('')}
+    </div>`
+      : '';
+
+  const coverageBadgeText =
+    analysis.coverageStatus === 'FULLY_INTERCEPTED'
+      ? 'Fully Intercepted'
+      : analysis.coverageStatus === 'PARTIALLY_ANALYZED'
+      ? 'Partially Analyzed'
+      : 'Unsupported Method';
+
+  const coverageBadgeBg =
+    analysis.coverageStatus === 'FULLY_INTERCEPTED'
+      ? 'rgba(16, 185, 129, 0.15)'
+      : analysis.coverageStatus === 'PARTIALLY_ANALYZED'
+      ? 'rgba(245, 158, 11, 0.15)'
+      : 'rgba(239, 68, 68, 0.15)';
+
+  const coverageBadgeColor =
+    analysis.coverageStatus === 'FULLY_INTERCEPTED'
+      ? '#34D399'
+      : analysis.coverageStatus === 'PARTIALLY_ANALYZED'
+      ? '#FBBF24'
+      : '#F87171';
 
   const modalContainer = document.createElement('div');
   modalContainer.id = 'chainshield-modal-container';
@@ -126,22 +208,29 @@ export function showPreSignModal(
           <div style="width:28px; height:28px; border-radius:6px; background:#134E4A; border:1px solid #14B8A6; display:flex; align-items:center; justify-content:center; color:#2DD4BF; font-weight:bold; font-size:14px;">🛡️</div>
           <div>
             <div style="font-size:13px; font-weight:800; color:#F3F4F6; letter-spacing:0.04em; font-family:monospace;">CHAINSHIELD SENTINEL</div>
-            <div style="font-size:10px; color:#9CA3AF; margin-top:1px;">Pre-Sign Transaction Interception</div>
+            <div style="font-size:10px; color:#9CA3AF; margin-top:1px;">Security Gate • Pre-Sign Interception</div>
           </div>
         </div>
-        <div style="background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeColor}; padding:4px 10px; border-radius:9999px; font-size:11px; font-weight:800; font-family:monospace; display:flex; align-items:center; gap:5px;">
-          <span>${analysis.riskLevel}</span>
-          <span style="opacity:0.7;">•</span>
-          <span>${analysis.riskScore}/100</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="background:${coverageBadgeBg}; color:${coverageBadgeColor}; border:1px solid ${coverageBadgeColor}; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:700; font-family:monospace;">
+            ${coverageBadgeText}
+          </div>
+          <div style="background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeColor}; padding:4px 10px; border-radius:9999px; font-size:11px; font-weight:800; font-family:monospace; display:flex; align-items:center; gap:5px;">
+            <span>${analysis.riskLevel}</span>
+            <span style="opacity:0.7;">•</span>
+            <span>${analysis.riskScore}/100</span>
+          </div>
         </div>
       </div>
 
       <!-- Body -->
       <div style="padding:18px; max-height:75vh; overflow-y:auto; box-sizing:border-box;">
+        ${degradedHtml}
+
         <!-- Recommendation -->
         <div style="background:${isCritical ? 'rgba(239,68,68,0.15)' : 'rgba(20,184,166,0.1)'}; border:1px solid ${isCritical ? 'rgba(239,68,68,0.5)' : 'rgba(20,184,166,0.4)'}; border-radius:8px; padding:12px; margin-bottom:14px;">
           <div style="font-size:11px; font-weight:800; color:${isCritical ? '#F87171' : '#2DD4BF'}; text-transform:uppercase; font-family:monospace;">
-            RECOMMENDATION: ${escapeHtml(analysis.recommendation)}
+            GATE DECISION: ${escapeHtml(analysis.securityGateDecision)} • ${escapeHtml(analysis.recommendation)}
           </div>
           <div style="font-size:12px; color:#D1D5DB; margin-top:4px; line-height:1.4;">
             ${escapeHtml(analysis.recommendationText)}
@@ -149,6 +238,8 @@ export function showPreSignModal(
         </div>
 
         ${mismatchHtml}
+        ${seaportHtml}
+        ${batchCallsHtml}
 
         <!-- Decoded Intent -->
         <div style="background:#0B0F14; border:1px solid #1F2630; border-radius:8px; padding:12px; margin-bottom:14px;">
@@ -165,10 +256,21 @@ export function showPreSignModal(
           </div>
 
           ${
+            analysis.contractAddress &&
+            analysis.contractAddress !== analysis.targetSpender &&
+            analysis.contractAddress !== '0x0000000000000000000000000000000000000000'
+              ? `
+          <div style="display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid #1F2630; font-size:11px; font-family:monospace;">
+            <span style="color:#6B7280;">Token / NFT Contract</span>
+            <span style="color:#60A5FA;">${shortenAddress(analysis.contractAddress)}</span>
+          </div>`
+              : ''
+          }
+          ${
             analysis.targetSpender && analysis.targetSpender !== '0x0000000000000000000000000000000000000000'
               ? `
           <div style="display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid #1F2630; font-size:11px; font-family:monospace;">
-            <span style="color:#6B7280;">Target / Spender</span>
+            <span style="color:#6B7280;">${analysis.intent.actionType === 'setApprovalForAll' ? 'Authorized Operator' : 'Target / Spender'}</span>
             <span style="color:#93C5FD;">${shortenAddress(analysis.targetSpender)}</span>
           </div>`
               : ''
@@ -238,9 +340,9 @@ export function showPreSignModal(
             : ''
         }
 
-        <!-- Explicit Pre-Sign Safety Notice -->
+        <!-- Explicit Safety Notice -->
         <div style="font-size:10px; color:#6B7280; text-align:center; padding:4px 8px; line-height:1.4;">
-          🛡️ <strong>Safety Guarantee:</strong> This request was intercepted before reaching your wallet. Clicking <strong>Cancel</strong> aborts the request cleanly without broadcasting or signing anything.
+          🛡️ <strong>Safety Guarantee:</strong> Intercepted before wallet confirmation. Clicking <strong>Cancel</strong> aborts immediately with code 4001 without signing or broadcasting.
         </div>
       </div>
 
@@ -263,18 +365,29 @@ export function showPreSignModal(
   const blockBtn = modalContainer.querySelector('#cs-block-btn') as HTMLButtonElement;
   const proceedBtn = modalContainer.querySelector('#cs-proceed-btn') as HTMLButtonElement;
 
+  let decisionMade = false;
+
   blockBtn?.addEventListener('click', () => {
+    if (decisionMade) return;
+    decisionMade = true;
     modalContainer.remove();
     onDecision('BLOCK');
   });
 
   proceedBtn?.addEventListener('click', () => {
+    if (decisionMade) return;
     if (isCritical) {
-      if (confirm('CRITICAL WARNING: This transaction exhibits confirmed drainer or unlimited withdrawal signatures. Are you sure you want to proceed?')) {
+      if (
+        confirm(
+          'CRITICAL SECURITY WARNING: This transaction exhibits confirmed drainer, unlimited withdrawal, or zero-consideration asset loss signatures. Are you sure you want to proceed?'
+        )
+      ) {
+        decisionMade = true;
         modalContainer.remove();
         onDecision('PROCEED');
       }
     } else {
+      decisionMade = true;
       modalContainer.remove();
       onDecision('PROCEED');
     }
@@ -284,7 +397,6 @@ export function showPreSignModal(
 export function showThreatBanner(hostname: string, riskScore: number, explanation: string) {
   const shadow = ensureHostElement();
 
-  // If already showing a banner, don't duplicate
   if (shadow.getElementById('chainshield-threat-banner')) {
     return;
   }
