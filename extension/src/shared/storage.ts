@@ -2,7 +2,15 @@ import { DEFAULT_SETTINGS, STORAGE_KEYS } from './config';
 import { ExtensionSettings, ThreatLogItem } from './types';
 
 function hasChromeStorage(): boolean {
-  return typeof chrome !== 'undefined' && Boolean(chrome?.storage?.local);
+  try {
+    return (
+      typeof chrome !== 'undefined' &&
+      Boolean(chrome?.runtime?.id) &&
+      Boolean(chrome?.storage?.local)
+    );
+  } catch {
+    return false;
+  }
 }
 
 // In-memory fallback for testing and non-extension environments
@@ -10,15 +18,23 @@ const memoryCache: Record<string, any> = {};
 
 export async function getStorageItem<T>(key: string, defaultValue: T): Promise<T> {
   if (hasChromeStorage()) {
-    return new Promise((resolve) => {
-      chrome.storage.local.get([key], (result: any) => {
-        if (chrome.runtime?.lastError || result[key] === undefined) {
+    try {
+      return await new Promise((resolve) => {
+        try {
+          chrome.storage.local.get([key], (result: any) => {
+            if (chrome.runtime?.lastError || !result || result[key] === undefined) {
+              resolve(defaultValue);
+            } else {
+              resolve(result[key] as T);
+            }
+          });
+        } catch {
           resolve(defaultValue);
-        } else {
-          resolve(result[key] as T);
         }
       });
-    });
+    } catch {
+      // Extension context invalidated or storage error; fallback gracefully
+    }
   }
 
   if (typeof localStorage !== 'undefined') {
@@ -35,9 +51,17 @@ export async function getStorageItem<T>(key: string, defaultValue: T): Promise<T
 
 export async function setStorageItem<T>(key: string, value: T): Promise<void> {
   if (hasChromeStorage()) {
-    return new Promise((resolve) => {
-      chrome.storage.local.set({ [key]: value }, () => resolve());
-    });
+    try {
+      await new Promise<void>((resolve) => {
+        try {
+          chrome.storage.local.set({ [key]: value }, () => resolve());
+        } catch {
+          resolve();
+        }
+      });
+    } catch {
+      // fallback
+    }
   }
 
   if (typeof localStorage !== 'undefined') {
@@ -52,8 +76,12 @@ export async function setStorageItem<T>(key: string, value: T): Promise<void> {
 }
 
 export async function getSettings(): Promise<ExtensionSettings> {
-  const stored = await getStorageItem<Partial<ExtensionSettings>>(STORAGE_KEYS.SETTINGS, {});
-  return { ...DEFAULT_SETTINGS, ...stored };
+  try {
+    const stored = await getStorageItem<Partial<ExtensionSettings>>(STORAGE_KEYS.SETTINGS, {});
+    return { ...DEFAULT_SETTINGS, ...stored };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
 }
 
 export async function saveSettings(updates: Partial<ExtensionSettings>): Promise<ExtensionSettings> {
@@ -64,11 +92,18 @@ export async function saveSettings(updates: Partial<ExtensionSettings>): Promise
 }
 
 export async function isDomainWhitelisted(hostname: string): Promise<boolean> {
-  const settings = await getSettings();
-  const clean = hostname.trim().toLowerCase();
-  return settings.whitelistedDomains.some(
-    (w) => w.toLowerCase() === clean || clean.endsWith('.' + w.toLowerCase())
-  );
+  try {
+    const settings = await getSettings();
+    const clean = hostname.trim().toLowerCase();
+    return settings.whitelistedDomains.some(
+      (w) => w.toLowerCase() === clean || clean.endsWith('.' + w.toLowerCase())
+    );
+  } catch {
+    const clean = hostname.trim().toLowerCase();
+    return DEFAULT_SETTINGS.whitelistedDomains.some(
+      (w) => w.toLowerCase() === clean || clean.endsWith('.' + w.toLowerCase())
+    );
+  }
 }
 
 export async function addWhitelistedDomain(domain: string): Promise<string[]> {
@@ -91,14 +126,22 @@ export async function removeWhitelistedDomain(domain: string): Promise<string[]>
 }
 
 export async function getThreatLogs(): Promise<ThreatLogItem[]> {
-  return getStorageItem<ThreatLogItem[]>(STORAGE_KEYS.THREAT_LOGS, []);
+  try {
+    return await getStorageItem<ThreatLogItem[]>(STORAGE_KEYS.THREAT_LOGS, []);
+  } catch {
+    return [];
+  }
 }
 
 export async function logThreatItem(item: ThreatLogItem): Promise<void> {
-  const logs = await getThreatLogs();
-  // Keep last 100 items
-  const next = [item, ...logs.filter((l) => l.id !== item.id)].slice(0, 100);
-  await setStorageItem(STORAGE_KEYS.THREAT_LOGS, next);
+  try {
+    const logs = await getThreatLogs();
+    // Keep last 100 items
+    const next = [item, ...logs.filter((l) => l.id !== item.id)].slice(0, 100);
+    await setStorageItem(STORAGE_KEYS.THREAT_LOGS, next);
+  } catch {
+    // Ignore storage errors on invalidated context
+  }
 }
 
 export async function clearThreatLogs(): Promise<void> {

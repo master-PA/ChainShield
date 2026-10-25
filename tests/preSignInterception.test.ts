@@ -6,6 +6,12 @@ import {
   PreSignAnalysisResult,
 } from '../extension/src/shared/types';
 import { decodeTransactionCalldata } from '../src/lib/txDecoder';
+import {
+  inspectFrameSupport,
+  validateBridgeRequest,
+  validateBridgeResponse,
+  logDiagnostic,
+} from '../extension/src/content/providerBridge';
 
 console.log('=== Running ChainShield Sentinel Pre-Sign Interception Regression Test Suite ===\n');
 
@@ -674,4 +680,84 @@ console.log('\nTest 15: Unsupported methods and degraded mode');
   console.log('  ✓ Unsupported and partially analyzed methods explicitly marked with disclosures');
 }
 
-console.log('\n=== All 15 Pre-Sign Interception Regression Tests Passed Successfully! ===\n');
+// ---------------------------------------------------------------------------
+// 16. Structured 7-Stage Diagnostics and Opaque Frame Rejection
+// ---------------------------------------------------------------------------
+console.log('\nTest 16: Structured 7-stage diagnostics and opaque frame rejection');
+{
+  // 16a: Inspect sandboxed opaque origin window
+  const sandboxedWindow: any = {
+    top: {}, // different object -> iframe
+    location: {
+      origin: 'null',
+      href: 'about:blank',
+      protocol: 'about:',
+    },
+  };
+  const sandboxInspection = inspectFrameSupport(sandboxedWindow);
+  assert.strictEqual(sandboxInspection.isSupported, false, 'Opaque sandboxed frame must be marked unsupported');
+  assert.strictEqual(sandboxInspection.origin, 'null');
+  assert.ok(sandboxInspection.reason && sandboxInspection.reason.includes('Sandboxed opaque frame'));
+
+  // 16b: Inspect legitimate top frame
+  const topWindow: any = {
+    location: {
+      origin: 'https://opensea.io',
+      href: 'https://opensea.io/account',
+      protocol: 'https:',
+    },
+  };
+  topWindow.top = topWindow; // top frame
+  const topInspection = inspectFrameSupport(topWindow);
+  assert.strictEqual(topInspection.isSupported, true, 'Top frame on https must be supported');
+  assert.strictEqual(topInspection.origin, 'https://opensea.io');
+  assert.strictEqual(topInspection.isTop, true);
+
+  // 16c: Schema validation for bridge request
+  const validReq: any = {
+    type: 'CHAINSHIELD_INPAGE_REQUEST',
+    id: 'cs_12345_test',
+    method: 'eth_sendTransaction',
+    params: [{ from: VALID_USER_ADDRESS, to: VALID_SPENDER_ADDRESS }],
+    origin: 'https://opensea.io',
+    href: 'https://opensea.io',
+    pageTitle: 'OpenSea',
+    timestamp: Date.now(),
+  };
+  assert.strictEqual(validateBridgeRequest(validReq), true, 'Valid request payload must pass schema validation');
+  assert.strictEqual(validateBridgeRequest({ method: 'eth_sendTransaction' }), false, 'Missing id must fail validation');
+  assert.strictEqual(validateBridgeRequest({ id: 'bad_id', method: 'eth_sendTransaction', params: [] }), false, 'Malformed id must fail');
+
+  // 16d: Schema validation for bridge response
+  assert.strictEqual(validateBridgeResponse({ type: 'CHAINSHIELD_INPAGE_RESPONSE', id: 'cs_12345_test', decision: 'PROCEED' }), true);
+  assert.strictEqual(validateBridgeResponse({ type: 'CHAINSHIELD_INPAGE_RESPONSE', id: 'cs_12345_test', decision: 'BLOCK' }), true);
+  assert.strictEqual(validateBridgeResponse({ type: 'CHAINSHIELD_INPAGE_RESPONSE', id: 'cs_12345_test', decision: 'INVALID' }), false);
+
+  // 16e: Verify diagnostic logger outputs stage prefixes
+  const logs: string[] = [];
+  const origLog = console.log;
+  console.log = (msg: string) => logs.push(msg);
+  try {
+    logDiagnostic(1, 'init', { walletType: 'MetaMask', isTop: true, origin: 'https://opensea.io' });
+    logDiagnostic(2, 'cs_123', { method: 'eth_sendTransaction' });
+    logDiagnostic(3, 'cs_123', { method: 'eth_sendTransaction', targetOrigin: 'https://opensea.io' });
+    logDiagnostic(4, 'cs_123', { method: 'eth_sendTransaction', origin: 'https://opensea.io' });
+    logDiagnostic(5, 'cs_123', { method: 'eth_sendTransaction', riskScore: 20, riskLevel: 'LOW', decision: 'ALLOW' });
+    logDiagnostic(6, 'cs_123', { method: 'eth_sendTransaction', decision: 'WARN', showingUI: true });
+    logDiagnostic(7, 'cs_123', { action: 'PROCEED', method: 'eth_sendTransaction' });
+  } finally {
+    console.log = origLog;
+  }
+
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage1:ProviderWrapped]')));
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage2:RequestCalled] id=cs_123 method=eth_sendTransaction')));
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage3:BridgeSent] id=cs_123 method=eth_sendTransaction targetOrigin=https://opensea.io')));
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage4:BridgeReceived] id=cs_123 method=eth_sendTransaction origin=https://opensea.io')));
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage5:AnalysisComplete] id=cs_123 method=eth_sendTransaction riskScore=20')));
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage6:UIReceived] id=cs_123 method=eth_sendTransaction decision=WARN showingUI=true')));
+  assert.ok(logs.some((l) => l.includes('[ChainShield:Stage7:ForwardOrReject] id=cs_123 action=PROCEED method=eth_sendTransaction')));
+
+  console.log('  ✓ Structured 7-stage diagnostics, opaque frame rejection, and schema validation verified');
+}
+
+console.log('\n=== All 16 Pre-Sign Interception Regression Tests Passed Successfully! ===\n');

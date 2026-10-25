@@ -1,14 +1,37 @@
 /**
  * ChainShield Sentinel In-Page EIP-1193 Provider Interceptor
  * Runs in the page's MAIN world context to wrap window.ethereum.request, send, and sendAsync.
+ *
+ * Key invariants:
+ * - Never modifies the original args before forwarding; creates a clean copy on Proceed.
+ * - Calls originalRequest with the original provider as `this` context.
+ * - Does NOT suppress wallet authorization errors (4100) — these are correct security behavior.
+ * - Dispatches eip6963:requestProvider to discover all EIP-6963 wallets.
  */
 
+import {
+  logDiagnostic,
+  inspectFrameSupport,
+  validateBridgeResponse,
+  BRIDGE_MESSAGE_TYPES,
+} from './providerBridge';
+
 (function () {
-  // Prevent double injection
+  // Inspect frame support: reject opaque-origin sandboxed iframes before attaching
+  const frame = inspectFrameSupport(window);
+  if (!frame.isSupported) {
+    console.log(
+      `[ChainShield:Bridge] Sandboxed frame with opaque origin (null) detected. Pre-sign interception is not supported in opaque sandboxed frames.`
+    );
+    return;
+  }
+
+  // Prevent double injection (MAIN world content_scripts + fallback script tag)
   if ((window as any).__CHAINSHIELD_INPAGE_INJECTED__) {
     return;
   }
   (window as any).__CHAINSHIELD_INPAGE_INJECTED__ = true;
+  (window as any).__CHAINSHIELD_VERSION__ = '1.0.1';
 
   let lastClickedText = '';
   let lastClickTime = 0;
@@ -56,6 +79,8 @@
     'wallet_addEthereumChain',
     'wallet_requestPermissions',
     'wallet_watchAsset',
+    'eth_requestAccounts',
+    'eth_accounts',
   ]);
 
   function isValidEthereumAddress(address: any): boolean {
@@ -252,17 +277,35 @@
       return;
     }
 
-    provider.__chainshield_wrapped__ = true;
+    // Capture the original provider reference for correct `this` binding on Proceed.
+    const originalProvider = provider;
 
-    provider.request = async function (args: { method: string; params?: any[] }) {
+    try {
+      provider.__chainshield_wrapped__ = true;
+    } catch {
+      // ignore if frozen
+    }
+
+    const walletType = provider.isMetaMask
+      ? 'MetaMask'
+      : provider.isCoinbaseWallet
+      ? 'CoinbaseWallet'
+      : provider.isBraveWallet
+      ? 'BraveWallet'
+      : provider.isRabby
+      ? 'Rabby'
+      : 'EIP1193Provider';
+
+    // Stage 1: Provider wrapper initialized
+    logDiagnostic(1, 'init', {
+      walletType,
+      isTop: frame.isTop,
+      origin: frame.origin,
+    });
+
+    const interceptedRequest = async function (args: { method: string; params?: any[] }) {
       if (!args || !args.method || !INTERCEPTABLE_METHODS.has(args.method)) {
-        return originalRequest.apply(this, arguments as any);
-      }
-
-      // Check if this request is already tagged as internally approved / bypassed to avoid recursion
-      if ((args as any).__chainshield_bypassed__) {
-        delete (args as any).__chainshield_bypassed__;
-        return originalRequest.apply(this, arguments as any);
+        return originalRequest.call(originalProvider, args);
       }
 
       // 1. Validate Ethereum addresses before forwarding or interception
@@ -277,24 +320,25 @@
 
       const id = 'cs_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
       const claimText = getRecentClaimText();
-      const capturedArguments = arguments;
-      const callerContext = this && this !== window ? this : provider;
-      const chainId = provider.chainId || (provider.networkVersion ? '0x' + Number(provider.networkVersion).toString(16) : undefined);
 
-      console.log('[ChainShield Sentinel: InPage] Request intercepted:', {
-        id,
-        method: args.method,
-        chainId,
-        ...sanitizeParamsForLogging(args.method, args.params || []),
-      });
+      // Snapshot the clean method and params at interception time for forwarding.
+      const capturedMethod = args.method;
+      const capturedParams: any[] = Array.isArray(args.params) ? [...args.params] : [];
+
+      const chainId =
+        provider.chainId ||
+        (provider.networkVersion ? '0x' + Number(provider.networkVersion).toString(16) : undefined);
+
+      // Stage 2: provider.request() called (method name only)
+      logDiagnostic(2, id, { method: args.method });
 
       // Post message to content script
       const requestPayload = {
-        type: 'CHAINSHIELD_INPAGE_REQUEST',
+        type: BRIDGE_MESSAGE_TYPES.REQUEST,
         id,
         method: args.method,
         params: args.params || [],
-        origin: window.location.origin,
+        origin: frame.origin,
         href: window.location.href,
         pageTitle: document.title,
         chainId,
@@ -312,8 +356,7 @@
         function responseListener(event: MessageEvent) {
           if (
             event.source !== window ||
-            !event.data ||
-            event.data.type !== 'CHAINSHIELD_INPAGE_RESPONSE' ||
+            !validateBridgeResponse(event.data) ||
             event.data.id !== id
           ) {
             return;
@@ -322,28 +365,41 @@
           window.removeEventListener('message', responseListener);
 
           if (event.data.decision === 'PROCEED') {
-            console.log('[ChainShield Sentinel: InPage] Proceed approved. Forwarding unmodified request to wallet provider:', {
-              id,
-              method: args.method,
-            });
-
-            // Mark internal bypass flag to prevent recursive interception
-            (args as any).__chainshield_bypassed__ = true;
+            // Stage 7: Proceed forwards to original provider
+            logDiagnostic(7, id, { action: 'PROCEED', method: capturedMethod });
 
             originalRequest
-              .apply(callerContext, capturedArguments as any)
+              .call(originalProvider, { method: capturedMethod, params: capturedParams })
               .then((result: any) => {
-                console.log('[ChainShield Sentinel: InPage] Wallet provider confirmed transaction successfully.');
+                console.log(
+                  '[ChainShield Sentinel: InPage] Wallet provider responded successfully. Method:',
+                  capturedMethod
+                );
                 resolve(result);
               })
               .catch((err: any) => {
-                console.warn('[ChainShield Sentinel: InPage] Wallet provider error/rejection:', err?.message || err);
+                const code = err?.code;
+                const message = err?.message || String(err);
+                console.warn('[ChainShield Sentinel: InPage] Wallet provider error on Proceed:', {
+                  method: capturedMethod,
+                  code,
+                  message,
+                  hint:
+                    code === 4100
+                      ? 'EIP-1193 Unauthorized. Connect wallet (eth_requestAccounts) before sending transactions.'
+                      : code === 4001
+                      ? 'User rejected the request in wallet UI.'
+                      : 'See wallet error details above.',
+                });
                 reject(err);
               });
           } else {
-            console.log('[ChainShield Sentinel: InPage] Request rejected/blocked. Aborting with EIP-1193 code 4001.');
+            // Stage 7: Cancel rejects before wallet invocation
+            logDiagnostic(7, id, { action: 'CANCEL', method: capturedMethod });
+
             const err: any = new Error(
-              event.data.reason || 'Transaction rejected by user via ChainShield Sentinel Pre-Sign Security.'
+              event.data.reason ||
+                'Transaction rejected by user via ChainShield Sentinel Pre-Sign Security.'
             );
             err.code = 4001; // EIP-1193 standard user-rejected action
             reject(err);
@@ -353,20 +409,50 @@
         window.addEventListener('message', responseListener);
       });
 
-      queueManager.register(id, args.method, args.params || [], requestPromise, pendingResolve, pendingReject);
+      queueManager.register(
+        id,
+        args.method,
+        args.params || [],
+        requestPromise,
+        pendingResolve,
+        pendingReject
+      );
 
-      // Post message to content script
-      window.postMessage(requestPayload, '*');
+      // Stage 3: Request sent to the bridge
+      logDiagnostic(3, id, { method: args.method, targetOrigin: frame.origin });
+
+      // Post message with validated frame origin
+      window.postMessage(requestPayload, frame.origin);
 
       return requestPromise;
     };
+
+    try {
+      provider.request = interceptedRequest;
+    } catch {
+      try {
+        Object.defineProperty(provider, 'request', {
+          value: interceptedRequest,
+          writable: true,
+          configurable: true,
+        });
+      } catch {
+        const proto = Object.getPrototypeOf(provider);
+        if (proto && typeof proto.request === 'function' && !proto.__chainshield_wrapped__) {
+          try {
+            proto.__chainshield_wrapped__ = true;
+            proto.request = interceptedRequest;
+          } catch {}
+        }
+      }
+    }
 
     // Also wrap legacy sendAsync if present
     if (typeof provider.sendAsync === 'function' && !provider.sendAsync.__chainshield_wrapped__) {
       const originalSendAsync = provider.sendAsync;
       provider.sendAsync = function (payload: any, callback: any) {
         if (!payload || !payload.method || !INTERCEPTABLE_METHODS.has(payload.method)) {
-          return originalSendAsync.apply(this, arguments as any);
+          return originalSendAsync.call(originalProvider, payload, callback);
         }
 
         provider
@@ -390,15 +476,45 @@
       const originalSend = provider.send;
       provider.send = function (methodOrPayload: any, params?: any) {
         if (typeof methodOrPayload === 'string' && INTERCEPTABLE_METHODS.has(methodOrPayload)) {
-          return provider.request({ method: methodOrPayload, params: Array.isArray(params) ? params : [] });
+          return provider.request({
+            method: methodOrPayload,
+            params: Array.isArray(params) ? params : [],
+          });
         }
-        if (typeof methodOrPayload === 'object' && methodOrPayload?.method && INTERCEPTABLE_METHODS.has(methodOrPayload.method)) {
-          return provider.request({ method: methodOrPayload.method, params: methodOrPayload.params || [] });
+        if (
+          typeof methodOrPayload === 'object' &&
+          methodOrPayload?.method &&
+          INTERCEPTABLE_METHODS.has(methodOrPayload.method)
+        ) {
+          return provider.request({
+            method: methodOrPayload.method,
+            params: methodOrPayload.params || [],
+          });
         }
-        return originalSend.apply(this, arguments as any);
+        return originalSend.call(originalProvider, methodOrPayload, params);
       };
       provider.send.__chainshield_wrapped__ = true;
     }
+  }
+
+  // Intercept window.addEventListener so any dApp listener for eip6963:announceProvider
+  // receives a detail whose provider is ALREADY wrapped by ChainShield!
+  try {
+    const originalAddEventListener = window.addEventListener;
+    window.addEventListener = function (type: string, listener: any, options?: any) {
+      if (type === 'eip6963:announceProvider' && typeof listener === 'function') {
+        const wrappedListener = function (this: any, event: any) {
+          if (event && event.detail && event.detail.provider) {
+            wrapProvider(event.detail.provider);
+          }
+          return listener.apply(this, arguments);
+        };
+        return originalAddEventListener.call(window, type, wrappedListener, options);
+      }
+      return originalAddEventListener.apply(window, arguments as any);
+    };
+  } catch {
+    // Non-fatal if addEventListener is non-configurable
   }
 
   // 1. Wrap window.ethereum if already defined
@@ -421,7 +537,7 @@
       },
     });
   } catch {
-    // If window.ethereum is non-configurable, fallback to event/poll
+    // If window.ethereum is non-configurable (some wallets do this), fallback to event/poll
   }
 
   // 3. EIP-6963 provider announcement listener (MetaMask, Rabby, Coinbase, Brave, etc.)
@@ -431,6 +547,13 @@
     }
   });
 
+  // Dispatch eip6963:requestProvider so installed wallets announce themselves.
+  try {
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+  } catch {
+    // Ignore if custom event not supported
+  }
+
   // 4. MetaMask initialization event
   window.addEventListener('ethereum#initialized', () => {
     if ((window as any).ethereum) {
@@ -438,7 +561,7 @@
     }
   });
 
-  // 5. Fallback interval check for slow extensions
+  // 5. Fallback interval check for slow extensions (polls for 3 seconds)
   let pollAttempts = 0;
   const pollInterval = setInterval(() => {
     pollAttempts++;
@@ -450,5 +573,5 @@
     }
   }, 100);
 
-  console.log('[ChainShield Sentinel] In-Page EIP-1193 pre-sign interceptor active.');
+  console.log('[ChainShield Sentinel] In-Page EIP-1193 pre-sign interceptor active. Origin:', frame.origin);
 })();

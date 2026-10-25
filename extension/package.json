@@ -1,0 +1,9 @@
+{
+  "name": "chainshield-sentinel-extension",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix .. run build:extension",
+    "dev": "npm --prefix .. run build:extension"
+  }
+}

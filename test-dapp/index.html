@@ -5,56 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChainShield Sentinel — Pre-Sign Verification Test dApp</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0B0F14;
-      --card-bg: #11161D;
-      --border: #1F2630;
-      --teal: #14B8A6;
-      --teal-dark: #134E4A;
-      --red: #EF4444;
-      --amber: #F59E0B;
-      --green: #10B981;
-      --text: #F3F4F6;
-      --text-muted: #9CA3AF;
+      --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      --bg: #f5f7f5;
+      --bg-soft: #edf2ee;
+      --card-bg: #ffffff;
+      --surface: #ffffff;
+      --border: rgba(19, 33, 26, 0.09);
+      --border-hover: rgba(19, 33, 26, 0.18);
+
+      --brand: #227a55;
+      --brand-deep: #165a3d;
+      --brand-soft: #e4f2ea;
+      --brand-line: rgba(34, 122, 85, 0.22);
+      --teal: #227a55;
+      --teal-dark: #e4f2ea;
+
+      --red: #d6455f;
+      --red-soft: #fce8ec;
+      --red-text: #a82642;
+      --red-line: rgba(168, 38, 66, 0.3);
+
+      --amber: #d9951f;
+      --amber-soft: #fbf1dc;
+      --amber-text: #8a5a10;
+      --amber-line: rgba(180, 121, 27, 0.3);
+
+      --green: #166b45;
+      --green-soft: #e4f2ea;
+      --green-text: #166b45;
+      --green-line: rgba(34, 122, 85, 0.22);
+
+      --blue: #3e63dd;
+      --blue-soft: #eef2fd;
+      --blue-line: rgba(62, 99, 221, 0.25);
+
+      --text: #13211a;
+      --text-muted: #6a7a71;
+      --text-secondary: #3b4a42;
+
+      --sh-1: 0 1px 2px rgba(19, 33, 26, 0.05), 0 8px 24px -12px rgba(19, 33, 26, 0.08);
+      --sh-2: 0 2px 4px rgba(19, 33, 26, 0.05), 0 18px 44px -18px rgba(19, 33, 26, 0.14);
+      --sh-3: 0 20px 40px -15px rgba(19, 33, 26, 0.18);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 24px 16px;
+      font-family: var(--font-sans);
+      padding: 32px 20px;
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
     .container {
-      max-width: 960px;
+      max-width: 1040px;
       margin: 0 auto;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--sh-1);
       margin-bottom: 24px;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 16px;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
     .brand-icon {
-      width: 40px; height: 40px;
-      background: var(--teal-dark);
-      border: 1px solid var(--teal);
-      border-radius: 8px;
+      width: 44px; height: 44px;
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-line);
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
+      font-size: 22px;
     }
-    .brand h1 { font-size: 18px; font-weight: 800; font-family: monospace; letter-spacing: 0.05em; }
-    .brand p { font-size: 12px; color: var(--text-muted); }
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: var(--font-sans);
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .brand p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
 
     .header-actions {
       display: flex;
@@ -64,153 +115,252 @@
     }
 
     .btn-wallet {
-      background: #1F2937;
-      border: 1px solid #374151;
-      color: #F3F4F6;
-      padding: 6px 14px;
-      border-radius: 9999px;
-      font-family: monospace;
+      background: var(--surface);
+      border: 1px solid rgba(19, 33, 26, 0.16);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
       font-size: 12px;
       cursor: pointer;
       font-weight: 700;
       transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .btn-wallet:hover { filter: brightness(1.2); }
+    .btn-wallet:hover {
+      background: var(--bg-soft);
+      color: var(--text);
+      border-color: rgba(19, 33, 26, 0.25);
+    }
 
     .status-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: 9999px;
-      font-size: 12px;
-      font-family: monospace;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
       font-weight: 700;
-      background: rgba(20, 184, 166, 0.15);
-      border: 1px solid var(--teal);
-      color: var(--teal);
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-line);
+      color: var(--brand-deep);
     }
     .status-pill.inactive {
-      background: rgba(239, 68, 68, 0.15);
-      border-color: var(--red);
-      color: var(--red);
+      background: var(--amber-soft);
+      border-color: var(--amber-line);
+      color: var(--amber-text);
     }
 
     .banner {
-      background: rgba(20, 184, 166, 0.1);
-      border: 1px solid rgba(20, 184, 166, 0.3);
-      border-radius: 10px;
-      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: var(--sh-1);
       margin-bottom: 24px;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.55;
+    }
+    .banner strong {
+      color: var(--text);
+      font-size: 14px;
+    }
+    .banner ol {
+      margin-left: 20px;
+      margin-top: 8px;
+      color: var(--text-secondary);
+    }
+    .banner li {
+      margin-bottom: 4px;
+    }
+    .banner code {
+      font-family: var(--font-mono);
+      background: var(--bg-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--brand-deep);
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 18px;
       margin-bottom: 24px;
     }
 
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
+      border-radius: 14px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: border-color 0.2s;
+      box-shadow: var(--sh-1);
+      transition: all 0.2s ease;
     }
-    .card:hover { border-color: #374151; }
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--sh-2);
+      transform: translateY(-2px);
+    }
     .card-tag {
-      font-size: 10px;
-      font-family: monospace;
+      font-size: 10.5px;
+      font-family: var(--font-mono);
       font-weight: 700;
       text-transform: uppercase;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
       display: inline-block;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      letter-spacing: 0.03em;
     }
-    .tag-safe { background: rgba(16, 185, 129, 0.2); color: var(--green); border: 1px solid var(--green); }
-    .tag-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid var(--red); }
-    .tag-warn { background: rgba(245, 158, 11, 0.2); color: var(--amber); border: 1px solid var(--amber); }
+    .tag-safe { background: var(--green-soft); color: var(--green-text); border: 1px solid var(--green-line); }
+    .tag-danger { background: var(--red-soft); color: var(--red-text); border: 1px solid var(--red-line); }
+    .tag-warn { background: var(--amber-soft); color: var(--amber-text); border: 1px solid var(--amber-line); }
 
-    .card h3 { font-size: 15px; margin-bottom: 6px; }
-    .card p { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+    .card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .card p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .card p code {
+      font-family: var(--font-mono);
+      background: var(--bg-soft);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      color: var(--brand-deep);
+    }
 
     .code-preview {
-      background: #070A0E;
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px;
-      font-family: monospace;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-family: var(--font-mono);
       font-size: 11px;
-      color: #93C5FD;
-      margin-bottom: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
       word-break: break-all;
     }
 
     .btn {
       width: 100%;
-      padding: 12px;
+      padding: 12px 16px;
       border-radius: 8px;
       border: none;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12.5px;
+      font-family: var(--font-sans);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: filter 0.15s, transform 0.1s;
+      transition: all 0.15s ease;
     }
-    .btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn:hover { filter: brightness(0.96); transform: translateY(-1px); }
     .btn:active { transform: translateY(0); }
-    .btn-safe { background: #0D9488; color: #FFF; }
-    .btn-danger { background: #DC2626; color: #FFF; }
-    .btn-amber { background: #D97706; color: #FFF; }
-    .btn-indigo { background: #4F46E5; color: #FFF; }
+    .btn-safe { background: var(--brand); color: #ffffff; box-shadow: 0 1px 2px rgba(34, 122, 85, 0.2); }
+    .btn-safe:hover { background: var(--brand-deep); }
+    .btn-danger { background: var(--red); color: #ffffff; box-shadow: 0 1px 2px rgba(214, 69, 95, 0.2); }
+    .btn-danger:hover { background: #c0334e; }
+    .btn-amber { background: var(--amber-text); color: #ffffff; box-shadow: 0 1px 2px rgba(180, 121, 27, 0.2); }
+    .btn-amber:hover { background: #704709; }
+    .btn-indigo { background: var(--blue); color: #ffffff; box-shadow: 0 1px 2px rgba(62, 99, 221, 0.2); }
+    .btn-indigo:hover { background: #2e4ebd; }
 
     .console-section {
-      background: var(--card-bg);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
+      box-shadow: var(--sh-1);
       overflow: hidden;
     }
     .console-header {
-      background: #070A0E;
-      padding: 12px 18px;
+      background: var(--bg);
+      padding: 14px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .console-header h2 { font-size: 13px; font-family: monospace; font-weight: 700; color: #D1D5DB; }
+    .console-header h2 {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .btn-clear {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-clear:hover {
+      background: var(--bg-soft);
+      color: var(--text);
+    }
 
     .console-logs {
-      padding: 14px 18px;
+      padding: 16px 20px;
       max-height: 380px;
       overflow-y: auto;
-      font-family: monospace;
-      font-size: 12px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      background: var(--surface);
     }
     .log-item {
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 9px 13px;
+      border-radius: 8px;
       border: 1px solid var(--border);
-      background: #0B0F14;
-      line-height: 1.4;
+      background: var(--bg);
+      line-height: 1.45;
+      color: var(--text);
     }
-    .log-blocked { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); color: #FCA5A5; }
-    .log-proceeded { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08); color: #6EE7B7; }
-    .log-info { border-color: #2D3748; color: #93C5FD; }
-    .log-diag { border-color: #4B5563; background: #111827; color: #E5E7EB; }
+    .log-blocked {
+      border-color: var(--red-line);
+      background: var(--red-soft);
+      color: var(--red-text);
+    }
+    .log-proceeded {
+      border-color: var(--brand-line);
+      background: var(--brand-soft);
+      color: var(--brand-deep);
+    }
+    .log-info {
+      border-color: var(--blue-line);
+      background: var(--blue-soft);
+      color: #2e4ebd;
+    }
+    .log-diag {
+      border-color: var(--border);
+      background: #f0f4f1;
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -240,7 +390,7 @@
         <li>Click <strong>"Cancel & Block Request"</strong>: The request is aborted with EIP-1193 code <code>4001</code>. MetaMask is never prompted.</li>
         <li>Click <strong>"Proceed to Wallet"</strong>: The request forwards with exact original parameters and causes MetaMask to open its confirmation prompt.</li>
       </ol>
-      <div style="margin-top: 8px; color: #9CA3AF; font-size: 12px;">
+      <div style="margin-top: 10px; color: var(--text-muted); font-size: 12px;">
         <em>Note: Testing does NOT broadcast transactions or spend funds. A built-in mock wallet runner is active if no browser wallet extension is installed.</em>
       </div>
     </div>
@@ -411,7 +561,7 @@
     <div class="console-section">
       <div class="console-header">
         <h2>LIVE INTERCEPTION VERIFICATION CONSOLE</h2>
-        <button id="btn-clear-logs" style="background:transparent; border:1px solid #374151; color:#9CA3AF; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Clear Logs</button>
+        <button id="btn-clear-logs" class="btn-clear">Clear Logs</button>
       </div>
       <div id="console-logs" class="console-logs">
         <div class="log-item log-info">Ready. Click any test action above to verify pre-sign interception.</div>
@@ -420,36 +570,45 @@
   </div>
 
   <script>
-    // 1. Setup Mock Wallet Provider Fallback if no wallet extension is installed
-    const underlyingWalletLog = [];
+    // 1. DOM Elements & Logging Utilities (Defined first so all startup functions can use addLog)
+    const consoleLogs = document.getElementById('console-logs');
+    const extensionBadge = document.getElementById('extension-badge');
+    const connectBtn = document.getElementById('btn-connect-wallet');
 
-    function setupMockProviderIfNeeded() {
-      if (!window.ethereum) {
-        console.log('[Test dApp] No wallet extension found. Initializing built-in Mock EIP-1193 Provider...');
-        window.ethereum = {
-          isMetaMask: true,
-          isChainShieldMockWallet: true,
-          selectedAddress: '0x71C84167F30831956453773266292494e8B68112',
-          request: async function(args) {
-            underlyingWalletLog.push({ timestamp: Date.now(), method: args.method, params: args.params });
-            addLog(
-              '📥 [UNDERLYING WALLET RECEIVED REQUEST] Method: ' + args.method + ' | Params forwarded with 100% parameter fidelity.',
-              'log-proceeded'
-            );
-            return '0xsimulated_tx_hash_' + Math.random().toString(36).slice(2, 10);
-          }
-        };
-      }
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    setupMockProviderIfNeeded();
+    function addLog(message, type = 'log-info') {
+      const container = consoleLogs || document.getElementById('console-logs');
+      if (!container) {
+        console.log('[Test dApp Log]', message);
+        return;
+      }
+      const item = document.createElement('div');
+      item.className = 'log-item ' + type;
+      const time = new Date().toLocaleTimeString();
+      item.innerHTML = '<strong>[' + time + ']</strong> ' + escapeHtml(message);
+      container.prepend(item);
+    }
 
     // 2. Extension Presence Detector
-    const extensionBadge = document.getElementById('extension-badge');
     function checkExtensionPresence() {
+      if (!extensionBadge) return;
       if (window.__CHAINSHIELD_INPAGE_INJECTED__) {
-        extensionBadge.className = 'status-pill';
-        extensionBadge.innerHTML = '<span>🛡️ Extension: ACTIVE & INTERCEPTING</span>';
+        const ver = window.__CHAINSHIELD_VERSION__;
+        if (ver === '1.0.1') {
+          extensionBadge.className = 'status-pill';
+          extensionBadge.style.background = '#d8f3e5';
+          extensionBadge.style.color = '#136a46';
+          extensionBadge.innerHTML = '<span>🛡️ Extension: ACTIVE & INTERCEPTING (v1.0.1)</span>';
+        } else {
+          extensionBadge.className = 'status-pill inactive';
+          extensionBadge.style.background = '#fef3c7';
+          extensionBadge.style.color = '#92400e';
+          extensionBadge.style.border = '1px solid #f59e0b';
+          extensionBadge.innerHTML = '<span>⚠️ Old Extension (v1.0.0) cached in Edge — Click Reload 🔄 in edge://extensions</span>';
+        }
       } else {
         extensionBadge.className = 'status-pill inactive';
         extensionBadge.innerHTML = '<span>⚠️ Extension: NOT DETECTED (Load extension/ in Edge/Chrome)</span>';
@@ -459,23 +618,50 @@
     checkExtensionPresence();
     setInterval(checkExtensionPresence, 500);
 
-    // 3. Logger helper
-    const consoleLogs = document.getElementById('console-logs');
-    function addLog(message, type = 'log-info') {
-      const item = document.createElement('div');
-      item.className = 'log-item ' + type;
-      const time = new Date().toLocaleTimeString();
-      item.innerHTML = '<strong>[' + time + ']</strong> ' + escapeHtml(message);
-      consoleLogs.prepend(item);
+    // 3. Clear logs button
+    const clearBtn = document.getElementById('btn-clear-logs');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (consoleLogs) {
+          consoleLogs.innerHTML = '<div class="log-item log-info">Logs cleared. Ready.</div>';
+        }
+      });
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    // 4. Setup Mock Wallet Provider Fallback if no wallet extension is installed
+    const underlyingWalletLog = [];
+
+    function setupMockProviderIfNeeded() {
+      if (!window.ethereum) {
+        console.log('[Test dApp] No wallet extension found. Initializing built-in Mock EIP-1193 Provider...');
+        window.ethereum = {
+          isMetaMask: false,
+          isChainShieldMockWallet: true,
+          selectedAddress: '0x71C84167F30831956453773266292494e8B68112',
+          chainId: '0xaa36a7',
+          request: async function(args) {
+            underlyingWalletLog.push({ timestamp: Date.now(), method: args.method, params: args.params });
+            addLog(
+              '📥 [MOCK WALLET RECEIVED REQUEST] Method: ' + args.method + ' | Params forwarded with 100% parameter fidelity.',
+              'log-proceeded'
+            );
+            if (args.method === 'eth_requestAccounts' || args.method === 'eth_accounts') {
+              return ['0x71C84167F30831956453773266292494e8B68112'];
+            }
+            return '0xsimulated_tx_hash_' + Math.random().toString(36).slice(2, 10);
+          }
+        };
+        addLog('ℹ️ No browser wallet extension found. Built-in Mock Wallet active (address: 0x71C8...8112). All tests will use mock provider.', 'log-info');
+      } else {
+        const walletName = window.ethereum.isMetaMask ? 'MetaMask'
+          : window.ethereum.isBraveWallet ? 'Brave Wallet'
+          : window.ethereum.isCoinbaseWallet ? 'Coinbase Wallet'
+          : 'Unknown Wallet';
+        addLog('✅ Real browser wallet detected: ' + walletName + '. (You can test immediately; or click "Connect MetaMask" to use your real account address).', 'log-diag');
+      }
     }
 
-    document.getElementById('btn-clear-logs').addEventListener('click', () => {
-      consoleLogs.innerHTML = '<div class="log-item log-info">Logs cleared. Ready.</div>';
-    });
+    setupMockProviderIfNeeded();
 
     // Valid full 42-character (20-byte) checksummed Ethereum test addresses
     const TEST_USER = '0x71C84167F30831956453773266292494e8B68112';
@@ -483,27 +669,57 @@
     const USDC_ADDR = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
     const BAYC_ADDR = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D';
 
+    // Decode EIP-1193 error codes into human-readable explanations
+    function decodeWalletError(err) {
+      const code = err && err.code;
+      const msg = (err && err.message) || String(err);
+      if (code === 4001) return '🛑 EIP-1193 code 4001: User rejected the request in wallet UI (or ChainShield Cancel).';
+      if (code === 4100) return '🔐 EIP-1193 code 4100: Unauthorized — wallet account not yet connected to this origin. Click "Connect MetaMask" first, then retry.';
+      if (code === 4200) return '❌ EIP-1193 code 4200: Unsupported method by this wallet provider.';
+      if (code === 4900) return '📡 EIP-1193 code 4900: Provider disconnected from all chains.';
+      if (code === 4901) return '📡 EIP-1193 code 4901: Provider disconnected from chain.';
+      if (msg.includes('must provide an Ethereum address')) return '⚠️ ChainShield address validation guard: ' + msg;
+      return 'Error (code: ' + code + '): ' + msg;
+    }
+
+    /**
+     * getActiveSenderAddress:
+     * 1. If real wallet has connected accounts (selectedAddress or eth_accounts) -> use it.
+     * 2. If not yet connected -> seamlessly fall back to TEST_USER (0x71C8...8112) so all
+     *    tests execute immediately and trigger ChainShield Sentinel's Pre-Sign modal.
+     * 3. Users can also click "Connect MetaMask" to authorize their real account for live on-chain forwarding.
+     */
     async function getActiveSenderAddress() {
-      if (window.ethereum) {
-        if (window.ethereum.selectedAddress && /^0x[0-9a-fA-F]{40}$/.test(window.ethereum.selectedAddress)) {
-          return window.ethereum.selectedAddress;
-        }
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (Array.isArray(accounts) && accounts.length > 0 && /^0x[0-9a-fA-F]{40}$/.test(accounts[0])) {
-            return accounts[0];
-          }
-        } catch {}
+      if (!window.ethereum) return TEST_USER;
+
+      // Mock wallet: use fixed test address
+      if (window.ethereum.isChainShieldMockWallet) {
+        return TEST_USER;
       }
+
+      // Check if wallet already has an authorized address
+      if (window.ethereum.selectedAddress && /^0x[0-9a-fA-F]{40}$/.test(window.ethereum.selectedAddress)) {
+        return window.ethereum.selectedAddress;
+      }
+
+      // Try non-intrusive eth_accounts check (does not prompt user)
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (Array.isArray(accounts) && accounts.length > 0 && /^0x[0-9a-fA-F]{40}$/.test(accounts[0])) {
+          return accounts[0];
+        }
+      } catch {}
+
+      // Fallback: return TEST_USER so tests always trigger ChainShield Sentinel pre-sign interception!
       return TEST_USER;
     }
 
-    const connectBtn = document.getElementById('btn-connect-wallet');
-    connectBtn.addEventListener('click', async () => {
-      if (!window.ethereum) {
-        addLog('No wallet extension found. Mock wallet active with test account: ' + TEST_USER, 'log-info');
-        return;
-      }
+    if (connectBtn) {
+      connectBtn.addEventListener('click', async () => {
+        if (!window.ethereum) {
+          addLog('No wallet extension found. Mock wallet active with test account: ' + TEST_USER, 'log-info');
+          return;
+        }
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         if (Array.isArray(accounts) && accounts.length > 0) {
@@ -511,12 +727,13 @@
           connectBtn.innerText = '🦊 ' + addr.slice(0, 6) + '...' + addr.slice(-4);
           connectBtn.style.borderColor = 'var(--teal)';
           connectBtn.style.color = 'var(--teal)';
-          addLog('🦊 Connected MetaMask account: ' + addr, 'log-proceeded');
+          addLog('🦊 Wallet connected: ' + addr + ' — All tests will now use your real account address!', 'log-proceeded');
         }
       } catch (err) {
-        addLog('Failed to connect wallet: ' + err.message, 'log-blocked');
+        addLog('Failed to connect wallet: ' + decodeWalletError(err), 'log-blocked');
       }
     });
+  }
 
     async function checkExistingConnection() {
       if (window.ethereum) {
@@ -527,6 +744,7 @@
             connectBtn.innerText = '🦊 ' + addr.slice(0, 6) + '...' + addr.slice(-4);
             connectBtn.style.borderColor = 'var(--teal)';
             connectBtn.style.color = 'var(--teal)';
+            addLog('🦊 Existing wallet connection detected: ' + addr, 'log-proceeded');
           }
         } catch {}
       }
@@ -568,7 +786,7 @@
         if (err.code === 4001) {
           addLog('🛑 Result: User clicked "Cancel & Block Request" in ChainShield Sentinel. Request rejected with code 4001. Wallet was NOT prompted!', 'log-blocked');
         } else {
-          addLog('Error: ' + err.message, 'log-blocked');
+          addLog(decodeWalletError(err), 'log-blocked');
         }
       }
     });
@@ -594,7 +812,7 @@
         if (err.code === 4001) {
           addLog('🛡️ SUCCESS: ChainShield Sentinel intercepted the Unlimited Approval mismatch! User clicked "Cancel & Block". Wallet NEVER prompted (code 4001).', 'log-blocked');
         } else {
-          addLog('Error: ' + err.message, 'log-blocked');
+          addLog(decodeWalletError(err), 'log-blocked');
         }
       }
     });
@@ -620,7 +838,7 @@
         if (err.code === 4001) {
           addLog('🛡️ SUCCESS: Blanket NFT drain blocked! Pre-sign interception halted the attack before wallet confirmation.', 'log-blocked');
         } else {
-          addLog('Error: ' + err.message, 'log-blocked');
+          addLog(decodeWalletError(err), 'log-blocked');
         }
       }
     });

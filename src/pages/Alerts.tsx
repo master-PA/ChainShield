@@ -22,7 +22,7 @@ export const Alerts: React.FC<{ navigate: (route: string) => void }> = ({ naviga
   const [newWatchAddress, setNewWatchAddress] = useState('');
   const [watchedAddresses, setWatchedAddresses] = useState<string[]>([
     '0x32A890184c718b91823901b8a91083918a90182c',
-    '0xRohit89410283c01829038b192837bc8192a01948',
+    '0x89410283c01829038b192837bc8192a01948',
   ]);
 
   const handleAddAddress = (e: React.FormEvent) => {
