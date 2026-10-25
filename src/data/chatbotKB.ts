@@ -84,7 +84,7 @@ export const CHATBOT_KNOWLEDGE_BASE: KBEntry[] = [
     ],
     relatedIds: ['kb-approvals-explanation', 'kb-drainers'],
     action: {
-      label: 'Test Rohit Worked Example',
+      label: 'Test Worked Example',
       route: '/scanner?target=https%3A%2F%2Fmintzone-nft.xyz',
       type: 'internal_link',
     },

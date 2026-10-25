@@ -25,6 +25,7 @@ import { decodeTransactionCalldata } from '../lib/txDecoder';
 import { evaluateClaimVsReality } from '../lib/claimChecker';
 import { classifyMessage } from '../lib/messageClassifier';
 import { answerSupportQuery, ChatAnswerResult } from '../lib/chatbotEngine';
+import { askAgent37 } from '../lib/agent37Service';
 import {
   canonicalizeJson,
   computeSha256,
@@ -44,6 +45,8 @@ export interface ChatMessageItem {
     route: string;
   };
   suggestedTopics?: Array<{ label: string; question: string }>;
+  isThinking?: boolean;
+  isAi?: boolean;
   timestamp: number;
 }
 
@@ -66,8 +69,10 @@ interface SecurityContextType {
   contractScanLoading: boolean;
   contractScanStep: string;
   contractScanError: string | null;
+  useAgent37Ai: boolean;
 
   setChatOpen: (open: boolean) => void;
+  setUseAgent37Ai: (val: boolean) => void;
   toggleLanguage: () => void;
   toggleExplainSimply: () => void;
   toggleDemoDataset: () => void;
@@ -175,12 +180,14 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const [useAgent37Ai, setUseAgent37Ai] = useState<boolean>(true);
+
   const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([
     {
       id: 'msg-init',
       sender: 'sentinel',
-      text: 'Hello. I am the Sentinel Support assistant. I can answer questions about transaction approvals, Permit signatures, drainer kits, or pre-transaction verification without any generative AI. Paste any address or target to analyze.',
-      categoryLabel: 'System Ready',
+      text: 'Hello! I am the ChainShield Sentinel AI assistant powered by Agent 37 (Hermes). I can answer security questions, review smart contracts, decode transaction calldata, or explain drainer threats in real-time. How can I help you protect your assets today?',
+      categoryLabel: 'Agent 37 • Hermes Online',
       confidence: 1.0,
       timestamp: Date.now() - 60000,
     },
@@ -462,7 +469,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
-  const sendChatMessage = (text: string) => {
+  const sendChatMessage = async (text: string) => {
     const userMsg: ChatMessageItem = {
       id: `msg-${Date.now()}`,
       sender: 'user',
@@ -470,20 +477,36 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       timestamp: Date.now(),
     };
 
-    const answerResult: ChatAnswerResult = answerSupportQuery(text, language);
-
-    const sentinelMsg: ChatMessageItem = {
-      id: `msg-${Date.now() + 1}`,
+    const thinkingId = `thinking-${Date.now() + 1}`;
+    const thinkingMsg: ChatMessageItem = {
+      id: thinkingId,
       sender: 'sentinel',
-      text: answerResult.answerText,
-      categoryLabel: answerResult.categoryLabel,
-      confidence: answerResult.confidence,
-      action: answerResult.action,
-      suggestedTopics: answerResult.suggestedTopics,
+      text: useAgent37Ai ? 'Agent 37 (Hermes) is analyzing...' : 'Searching Sentinel Knowledge Base...',
+      categoryLabel: useAgent37Ai ? 'Agent 37 • Hermes Cloud AI' : 'Rules KB',
+      isThinking: true,
       timestamp: Date.now() + 1,
     };
 
-    setChatMessages((prev) => [...prev, userMsg, sentinelMsg]);
+    setChatMessages((prev) => [...prev, userMsg, thinkingMsg]);
+
+    const result = await askAgent37(text, {
+      language,
+      useAi: useAgent37Ai,
+    });
+
+    const finalMsg: ChatMessageItem = {
+      id: `msg-${Date.now() + 2}`,
+      sender: 'sentinel',
+      text: result.answer,
+      categoryLabel: result.categoryLabel,
+      confidence: result.confidence,
+      action: result.action,
+      suggestedTopics: result.suggestedTopics,
+      isAi: result.isAi,
+      timestamp: Date.now() + 2,
+    };
+
+    setChatMessages((prev) => prev.map((m) => (m.id === thinkingId ? finalMsg : m)));
   };
 
   const updateScanEvidence = (reportId: string, updates: Partial<import('../types/security').EvidenceRecord>) => {
@@ -522,7 +545,9 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         contractScanLoading,
         contractScanStep,
         contractScanError,
+        useAgent37Ai,
         setChatOpen,
+        setUseAgent37Ai,
         toggleLanguage,
         toggleExplainSimply,
         toggleDemoDataset,

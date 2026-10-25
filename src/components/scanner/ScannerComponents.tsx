@@ -17,7 +17,10 @@ import {
   Code2,
   Download,
   Info,
+  Sparkles,
+  Bot,
 } from 'lucide-react';
+import { auditContractWithAgent37 } from '../../lib/agent37Service';
 import {
   ReasonItem,
   IntentSummary,
@@ -280,6 +283,29 @@ export const ContractAnalysisView: React.FC<{
   const [copiedAddr, setCopiedAddr] = useState(false);
   const [copiedEvidence, setCopiedEvidence] = useState(false);
   const [copiedReport, setCopiedReport] = useState(false);
+  const [aiAuditLoading, setAiAuditLoading] = useState(false);
+  const [aiAuditReport, setAiAuditReport] = useState<string | null>(null);
+
+  const handleRunAiAudit = async () => {
+    setAiAuditLoading(true);
+    try {
+      const findingsSummary = scan.findings.map(
+        (f) => `[${f.severity}] ${f.title}: ${f.description}`
+      );
+      const sourceSnippet = scan.sourceMetadata.sourceFiles[0]?.content;
+      const report = await auditContractWithAgent37(
+        scan.target,
+        scan.networkName,
+        findingsSummary,
+        sourceSnippet
+      );
+      setAiAuditReport(report);
+    } catch {
+      setAiAuditReport('Failed to query Agent 37 cloud AI auditor.');
+    } finally {
+      setAiAuditLoading(false);
+    }
+  };
 
   const toggleFinding = (id: string) => {
     setExpandedFindings((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -494,6 +520,52 @@ export const ContractAnalysisView: React.FC<{
 
       {/* 3. Reason Points Contribution */}
       <ReasonList reasons={scan.reasons} />
+
+      {/* Agent 37 Hermes AI Security Audit Card */}
+      <div className="p-4 rounded-lg bg-gradient-to-br from-[#111722] to-[#161226] border border-purple-900/50 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded-md bg-purple-950/90 border border-purple-700/60 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-zinc-100 flex items-center gap-1.5 flex-wrap">
+                <span>Agent 37 • Hermes Cloud AI Security Audit</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                  Instance: ahr3eijv8w
+                </span>
+              </div>
+              <div className="text-[10px] text-zinc-400 font-mono">
+                Real-time AI vulnerability reasoning & attack path synthesis
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRunAiAudit}
+            disabled={aiAuditLoading}
+            className="px-3 py-1.5 rounded-md text-xs font-medium bg-purple-950/90 hover:bg-purple-900 text-purple-200 border border-purple-700/70 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 shrink-0"
+          >
+            {aiAuditLoading ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-purple-300" />
+                <span>Hermes Analyzing...</span>
+              </>
+            ) : (
+              <>
+                <Bot className="w-3.5 h-3.5 text-purple-300" />
+                <span>{aiAuditReport ? 'Re-run AI Audit' : 'Ask Agent 37 to Audit'}</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {aiAuditReport && (
+          <div className="mt-2 p-3.5 rounded-md bg-[#0D1017] border border-purple-900/40 text-xs text-zinc-200 leading-relaxed font-mono whitespace-pre-line">
+            {aiAuditReport}
+          </div>
+        )}
+      </div>
 
       {/* 4. Evidence-Backed Security Findings List */}
       <div className="space-y-3">

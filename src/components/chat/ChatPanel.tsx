@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, Headphones, ExternalLink, HelpCircle, CheckCircle, ShieldAlert } from 'lucide-react';
+import { X, Send, Headphones, ExternalLink, HelpCircle, CheckCircle, ShieldAlert, Sparkles, Bot, Loader2 } from 'lucide-react';
 import { useSecurity, ChatMessageItem } from '../../context/SecurityContext';
 
 interface ChatPanelProps {
@@ -7,7 +7,15 @@ interface ChatPanelProps {
 }
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ navigate }) => {
-  const { chatOpen, setChatOpen, chatMessages, sendChatMessage, language } = useSecurity();
+  const {
+    chatOpen,
+    setChatOpen,
+    chatMessages,
+    sendChatMessage,
+    language,
+    useAgent37Ai,
+    setUseAgent37Ai,
+  } = useSecurity();
   const [inputText, setInputText] = useState('');
 
   if (!chatOpen) return null;
@@ -32,18 +40,54 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ navigate }) => {
       {/* Header */}
       <div className="p-3 border-b border-[#1F2630] flex items-center justify-between bg-[#0E131A]">
         <div className="flex items-center space-x-2">
-          <Headphones className="w-4 h-4 text-teal-400" />
+          <div className="w-7 h-7 rounded-md bg-teal-950/70 border border-teal-700/60 flex items-center justify-center">
+            {useAgent37Ai ? (
+              <Sparkles className="w-4 h-4 text-teal-400" />
+            ) : (
+              <Headphones className="w-4 h-4 text-zinc-400" />
+            )}
+          </div>
           <div>
-            <div className="text-xs font-semibold text-zinc-100">Sentinel Support</div>
-            <div className="text-[10px] text-zinc-400 font-mono">Supervised KB • 0% Generative AI</div>
+            <div className="text-xs font-semibold text-zinc-100 flex items-center gap-1.5">
+              <span>Sentinel Support</span>
+              {useAgent37Ai && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-950/70 text-purple-300 border border-purple-800/60">
+                  Hermes AI
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-zinc-400 font-mono flex items-center gap-1.5">
+              {useAgent37Ai ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="text-teal-400 font-medium">Agent 37 • Live Cloud AI</span>
+                </>
+              ) : (
+                <span>Supervised Rules KB</span>
+              )}
+            </div>
           </div>
         </div>
-        <button
-          onClick={() => setChatOpen(false)}
-          className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-[#161D26]"
-        >
-          <X className="w-4 h-4" />
-        </button>
+
+        <div className="flex items-center space-x-1.5">
+          <button
+            onClick={() => setUseAgent37Ai(!useAgent37Ai)}
+            title={useAgent37Ai ? 'Switch to Deterministic Rules KB' : 'Switch to Agent 37 Cloud AI'}
+            className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+              useAgent37Ai
+                ? 'bg-teal-950/80 border-teal-700 text-teal-300 hover:bg-teal-900'
+                : 'bg-zinc-800/80 border-zinc-700 text-zinc-300 hover:bg-zinc-700'
+            }`}
+          >
+            {useAgent37Ai ? 'AI Active' : 'KB Mode'}
+          </button>
+          <button
+            onClick={() => setChatOpen(false)}
+            className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-[#161D26]"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -59,6 +103,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ navigate }) => {
                 <span className="text-[10px] font-mono text-teal-400 font-medium">
                   {msg.categoryLabel}
                 </span>
+                {msg.isAi && (
+                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-purple-950/50 text-purple-300 border border-purple-800/50">
+                    Agent 37
+                  </span>
+                )}
                 {msg.confidence !== undefined && (
                   <span className="text-[9px] font-mono text-zinc-500">
                     ({Math.round(msg.confidence * 100)}% match)
@@ -71,10 +120,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ navigate }) => {
               className={`p-3 rounded-lg text-xs leading-relaxed max-w-[90%] border ${
                 msg.sender === 'user'
                   ? 'bg-teal-950/60 text-zinc-100 border-teal-800/80 rounded-br-none'
+                  : msg.isThinking
+                  ? 'bg-[#161D26] text-teal-300 border-teal-800/50 rounded-bl-none'
                   : 'bg-[#161D26] text-zinc-200 border-[#1F2630] rounded-bl-none'
               }`}
             >
-              <p>{msg.text}</p>
+              {msg.isThinking ? (
+                <div className="flex items-center space-x-2 py-0.5">
+                  <Loader2 className="w-3.5 h-3.5 text-teal-400 animate-spin" />
+                  <span className="text-[11px] font-mono text-teal-300 animate-pulse">
+                    {msg.text}
+                  </span>
+                </div>
+              ) : (
+                <p className="whitespace-pre-line">{msg.text}</p>
+              )}
 
               {/* Action Link button */}
               {msg.action && (

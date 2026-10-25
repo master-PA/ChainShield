@@ -6,7 +6,7 @@ export const CommunityLeadersPanel: React.FC<{ onNavigateCommunity: () => void }
   onNavigateCommunity,
 }) => {
   const leaders = [
-    { rank: 1, handle: '0xRohit89...42a1', reports: 48, accuracy: '98.2%', rep: 94, stakeReturned: '3.4 ETH' },
+    { rank: 1, handle: '0x89...42a1', reports: 48, accuracy: '98.2%', rep: 94, stakeReturned: '3.4 ETH' },
     { rank: 2, handle: '0xPriyaSecurity...90ff', reports: 62, accuracy: '96.8%', rep: 96, stakeReturned: '4.8 ETH' },
     { rank: 3, handle: '0xSentry99...11b2', reports: 31, accuracy: '94.5%', rep: 88, stakeReturned: '1.9 ETH' },
   ];

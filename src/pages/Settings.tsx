@@ -52,11 +52,10 @@ export const Settings: React.FC = () => {
           </div>
           <button
             onClick={toggleExplainSimply}
-            className={`px-3 py-1.5 rounded text-xs font-mono border transition-colors ${
-              explainSimply
+            className={`px-3 py-1.5 rounded text-xs font-mono border transition-colors ${explainSimply
                 ? 'bg-teal-950 text-teal-300 border-teal-700'
                 : 'bg-[#161D26] text-zinc-400 border-[#1F2630]'
-            }`}
+              }`}
           >
             {explainSimply ? 'ENABLED' : 'DISABLED'}
           </button>
@@ -66,16 +65,15 @@ export const Settings: React.FC = () => {
           <div>
             <span className="text-xs font-medium text-zinc-200 block">Demo Dataset Active</span>
             <span className="text-[11px] text-zinc-500">
-              Show curated case studies (Rohit's Telegram NFT, Priya's proxy alert)
+              Show curated case studies (Telegram NFT, Priya's proxy alert)
             </span>
           </div>
           <button
             onClick={toggleDemoDataset}
-            className={`px-3 py-1.5 rounded text-xs font-mono border transition-colors ${
-              isDemoDataset
+            className={`px-3 py-1.5 rounded text-xs font-mono border transition-colors ${isDemoDataset
                 ? 'bg-teal-950 text-teal-300 border-teal-700'
                 : 'bg-[#161D26] text-zinc-400 border-[#1F2630]'
-            }`}
+              }`}
           >
             {isDemoDataset ? 'ACTIVE' : 'LIVE ONLY'}
           </button>

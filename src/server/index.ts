@@ -450,6 +450,65 @@ app.post('/api/v1/contract-scans', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/v1/agent37/chat
+ * Proxies messages to the Agent 37 Hermes cloud AI instance.
+ */
+const AGENT37_API_KEY =
+  process.env.AGENT37_API_KEY ||
+  'sk_live_d0ugelzgw9nd7bj19ezgjke0_f6de1abb078b15a63d41d4d7d5d10c0a099b4c53828057d228a674cdafa90c85';
+const AGENT37_INSTANCE_URL =
+  process.env.AGENT37_INSTANCE_URL || 'https://ahr3eijv8w.agent37.app';
+
+app.post('/api/v1/agent37/chat', async (req: Request, res: Response) => {
+  try {
+    const { input, sessionId, reasoningEffort = 'low' } = req.body;
+    if (!input || typeof input !== 'string') {
+      return res.status(400).json({ success: false, error: 'Missing or invalid input parameter.' });
+    }
+
+    const response = await fetch(`${AGENT37_INSTANCE_URL}/v1/responses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Agent37-Key': AGENT37_API_KEY,
+        'Authorization': `Bearer ${AGENT37_API_KEY}`,
+      },
+      body: JSON.stringify({
+        input,
+        session_id: sessionId || undefined,
+        stream: false,
+        reasoning_effort: reasoningEffort,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn('[Agent37 Proxy] Upstream status:', response.status, errText);
+      return res.status(response.status).json({ success: false, error: errText });
+    }
+
+    const data = await response.json();
+    return res.json({
+      success: true,
+      data: {
+        id: data.id,
+        sessionId: data.session_id,
+        outputText: data.output_text,
+        agent: data.agent || 'hermes',
+        status: data.status,
+        usage: data.usage,
+      },
+    });
+  } catch (err: any) {
+    console.error('[Agent37 Proxy] Request error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Internal error communicating with Agent 37',
+    });
+  }
+});
+
 // Standalone runner
 const PORT = process.env.PORT || 3001;
 if (process.env.NODE_ENV !== 'test' && !process.env.VITE_DEV_SERVER) {

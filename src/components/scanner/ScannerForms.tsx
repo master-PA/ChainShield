@@ -19,7 +19,7 @@ import { LinkSource, SandboxRunResult } from '../../types/security';
 import { runBurnerSandbox } from '../../lib/mockSandbox';
 
 export const TargetForm: React.FC = () => {
-  const { runTargetScan, isScanning, loadRohitExample } = useSecurity();
+  const { runTargetScan, isScanning, loadExample } = useSecurity();
   const [target, setTarget] = useState('https://mintzone-nft.xyz');
   const [linkSource, setLinkSource] = useState<LinkSource>('telegram_dm');
   const [isPrivateCheck, setIsPrivateCheck] = useState(false);
@@ -104,7 +104,7 @@ export const TargetForm: React.FC = () => {
         </div>
       </div>
 
-      {/* Rohit Example Preset Trigger */}
+      {/* Example Preset Trigger */}
       <div className="pt-2 border-t border-[#1F2630]/60 flex items-center justify-between text-[11px]">
         <span className="text-zinc-500">Need a demonstration target?</span>
         <button
@@ -112,11 +112,11 @@ export const TargetForm: React.FC = () => {
           onClick={() => {
             setTarget('https://mintzone-nft.xyz');
             setLinkSource('telegram_dm');
-            loadRohitExample();
+            loadExample();
           }}
           className="text-teal-400 font-mono hover:underline"
         >
-          Load Rohit's Telegram Mintzone Example →
+          Load Telegram Mintzone Example →
         </button>
       </div>
     </form>
@@ -238,13 +238,12 @@ export const MessageForm: React.FC = () => {
             </div>
             <div className="text-right">
               <span
-                className={`font-mono text-sm font-bold ${
-                  activeMessageScan.riskScore >= 75
+                className={`font-mono text-sm font-bold ${activeMessageScan.riskScore >= 75
                     ? 'text-rose-400'
                     : activeMessageScan.riskScore >= 50
                       ? 'text-orange-400'
                       : 'text-emerald-400'
-                }`}
+                  }`}
               >
                 {activeMessageScan.riskScore}/100 {activeMessageScan.riskLevel}
               </span>
@@ -330,9 +329,8 @@ export const SandboxRunnerView: React.FC = () => {
               Logged RPC Requests ({sandboxResult.totalRequests})
             </span>
             <span
-              className={`font-mono font-semibold ${
-                sandboxResult.drainerBehaviorDetected ? 'text-rose-400' : 'text-emerald-400'
-              }`}
+              className={`font-mono font-semibold ${sandboxResult.drainerBehaviorDetected ? 'text-rose-400' : 'text-emerald-400'
+                }`}
             >
               {sandboxResult.drainerBehaviorDetected
                 ? 'DRAINER BEHAVIOR CONFIRMED'
@@ -344,11 +342,10 @@ export const SandboxRunnerView: React.FC = () => {
             {sandboxResult.requests.map((req) => (
               <div
                 key={req.id}
-                className={`p-2.5 rounded border ${
-                  req.wasBlocked
+                className={`p-2.5 rounded border ${req.wasBlocked
                     ? 'bg-rose-950/30 border-rose-800/80 text-rose-200'
                     : 'bg-[#161D26] border-[#1F2630] text-zinc-300'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-teal-400">{req.method}</span>
@@ -389,7 +386,7 @@ export const ContractScanForm: React.FC = () => {
       return;
     }
     setInputError(null);
-    runContractScan(chainId, clean).catch(() => {});
+    runContractScan(chainId, clean).catch(() => { });
   };
 
   const handleSelectPreset = (targetChainId: number, targetAddr: string) => {

@@ -42,12 +42,12 @@ const steps = [
 ];
 
 export const Landing: React.FC<LandingProps> = ({ navigate }) => {
-  const { loadRohitExample } = useSecurity();
+  const { loadExample } = useSecurity();
   const root = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const startRohit = () => {
-    loadRohitExample();
+  const start = () => {
+    loadExample();
     navigate('/scanner?target=https%3A%2F%2Fmintzone-nft.xyz');
   };
 
@@ -133,8 +133,8 @@ export const Landing: React.FC<LandingProps> = ({ navigate }) => {
               <a className="btn btn-primary" href="#/scanner" onClick={go('/scanner')}>
                 Go to Scanner <Arrow />
               </a>
-              <button className="btn btn-secondary" onClick={startRohit}>
-                Walkthrough: Rohit’s NFT drainer
+              <button className="btn btn-secondary" onClick={start}>
+                Walkthrough:  NFT drainer
               </button>
             </div>
 
@@ -256,16 +256,26 @@ export const Landing: React.FC<LandingProps> = ({ navigate }) => {
             </article>
 
             {[
-              { r: '/wallet-health', t: 'Wallet health & revoke', d: 'Audit existing allowances and build zero-allowance revoke transactions.', cta: 'Check a wallet',
-                icon: <><path d="M12 3.5l7.5 3.2v5.6c0 4.3-3 8-7.5 9.2-4.5-1.2-7.5-4.9-7.5-9.2V6.7L12 3.5z" stroke="#227A55" strokeWidth="1.9" strokeLinejoin="round" /><path d="M9.2 12.2l2 2 3.6-3.9" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></> },
-              { r: '/alerts', t: 'Upgrade tripwire', d: 'Instant alerts when an approved proxy swaps to unverified bytecode.', cta: 'View alerts',
-                icon: <><path d="M6 17.5V11a6 6 0 0112 0v6.5l1.5 1.5h-15L6 17.5z" stroke="#227A55" strokeWidth="1.9" strokeLinejoin="round" /><path d="M10 21h4" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></> },
-              { r: '/verify', t: 'Evidence anchor', d: 'Compare a local SHA-256 against the on-chain record to prove a report was never edited.', cta: 'Verify a report',
-                icon: <><circle cx="11" cy="11" r="6.5" stroke="#227A55" strokeWidth="1.9" /><path d="M16 16l4.5 4.5" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></> },
-              { r: '/drainer-kits', t: 'Drainer kit library', d: 'Fingerprints of known kits, so lookalike front-ends are caught on sight.', cta: 'Browse kits',
-                icon: <><rect x="3" y="4.5" width="18" height="14" rx="2.5" stroke="#227A55" strokeWidth="1.9" /><path d="M3 9h18M7 13h5" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></> },
-              { r: '/extension', t: 'Chrome extension', d: 'A pre-sign modal intercepts eth_sendTransaction before your wallet prompt appears.', cta: 'See how it works',
-                icon: <><path d="M6 3.5h8l4.5 4.5v12.5H6z" stroke="#227A55" strokeWidth="1.9" strokeLinejoin="round" /><path d="M9 12.5h6M9 16h4" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></> },
+              {
+                r: '/wallet-health', t: 'Wallet health & revoke', d: 'Audit existing allowances and build zero-allowance revoke transactions.', cta: 'Check a wallet',
+                icon: <><path d="M12 3.5l7.5 3.2v5.6c0 4.3-3 8-7.5 9.2-4.5-1.2-7.5-4.9-7.5-9.2V6.7L12 3.5z" stroke="#227A55" strokeWidth="1.9" strokeLinejoin="round" /><path d="M9.2 12.2l2 2 3.6-3.9" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></>
+              },
+              {
+                r: '/alerts', t: 'Upgrade tripwire', d: 'Instant alerts when an approved proxy swaps to unverified bytecode.', cta: 'View alerts',
+                icon: <><path d="M6 17.5V11a6 6 0 0112 0v6.5l1.5 1.5h-15L6 17.5z" stroke="#227A55" strokeWidth="1.9" strokeLinejoin="round" /><path d="M10 21h4" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></>
+              },
+              {
+                r: '/verify', t: 'Evidence anchor', d: 'Compare a local SHA-256 against the on-chain record to prove a report was never edited.', cta: 'Verify a report',
+                icon: <><circle cx="11" cy="11" r="6.5" stroke="#227A55" strokeWidth="1.9" /><path d="M16 16l4.5 4.5" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></>
+              },
+              {
+                r: '/drainer-kits', t: 'Drainer kit library', d: 'Fingerprints of known kits, so lookalike front-ends are caught on sight.', cta: 'Browse kits',
+                icon: <><rect x="3" y="4.5" width="18" height="14" rx="2.5" stroke="#227A55" strokeWidth="1.9" /><path d="M3 9h18M7 13h5" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></>
+              },
+              {
+                r: '/extension', t: 'Chrome extension', d: 'A pre-sign modal intercepts eth_sendTransaction before your wallet prompt appears.', cta: 'See how it works',
+                icon: <><path d="M6 3.5h8l4.5 4.5v12.5H6z" stroke="#227A55" strokeWidth="1.9" strokeLinejoin="round" /><path d="M9 12.5h6M9 16h4" stroke="#227A55" strokeWidth="1.9" strokeLinecap="round" /></>
+              },
             ].map((c, i) => (
               <article className="fcard r" key={c.r} style={{ ['--d' as any]: `${(i + 1) * 0.06}s` }} onClick={() => navigate(c.r)}>
                 <div className="ic"><svg viewBox="0 0 24 24" fill="none">{c.icon}</svg></div>
@@ -305,7 +315,7 @@ export const Landing: React.FC<LandingProps> = ({ navigate }) => {
               <svg viewBox="0 0 24 24" fill="none"><path d="M6 3.5h8l4.5 4.5v12.5H6z" stroke="#165A3D" strokeWidth="2.2" strokeLinejoin="round" /><path d="M9 12.5h6M9 16h4" stroke="#165A3D" strokeWidth="2.2" strokeLinecap="round" /></svg>
               Worked case study
             </span>
-            <h2 className="sec-title r" style={{ ['--d' as any]: '.07s' }}>Rohit’s Telegram NFT incident.</h2>
+            <h2 className="sec-title r" style={{ ['--d' as any]: '.07s' }}>Telegram NFT incident.</h2>
             <ul className="rlist">
               <li className="r"><span className="ix">01</span><div><h4>Source &amp; fingerprint</h4><p>Unsolicited Telegram DM (+10), domain registered 2 days ago (+20), JS bundle 87% similar to Inferno Drainer (+25).</p></div></li>
               <li className="r" style={{ ['--d' as any]: '.06s' }}><span className="ix">02</span><div><h4>Claim vs reality</h4><p>The button says “Claim Free NFT”; the sandbox caught an immediate setApprovalForAll(all NFTs, true) — intent mismatch 96/100.</p></div></li>
@@ -337,7 +347,7 @@ export const Landing: React.FC<LandingProps> = ({ navigate }) => {
               </div>
             </div>
             <div className="rp-foot">
-              <button className="btn btn-primary btn-sm" onClick={startRohit}>Open in Scanner</button>
+              <button className="btn btn-primary btn-sm" onClick={start}>Open in Scanner</button>
               <a className="btn btn-secondary btn-sm" href="#/verify" onClick={go('/verify')}>Verify evidence</a>
               <span className="stamp">Report #5410982 · Sepolia</span>
             </div>
