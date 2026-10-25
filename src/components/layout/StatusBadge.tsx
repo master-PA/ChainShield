@@ -19,7 +19,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ level, score, size = '
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded font-mono font-medium border ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses[size]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-mono font-medium border ${colors.bg} ${colors.text} ${colors.border} ${sizeClasses[size]}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
       <span>{level}</span>

@@ -19,22 +19,26 @@ import { Landing } from './pages/Landing';
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<string>('/');
+  const [navOpen, setNavOpen] = useState(false);
 
   // Synchronize with URL hash or path if present
   useEffect(() => {
     const handlePopState = () => {
       const hash = window.location.hash.replace(/^#/, '');
-      if (hash) {
-        setCurrentRoute(hash);
-      }
+      setCurrentRoute(hash || '/');
     };
     handlePopState();
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, []);
 
   const navigate = (route: string) => {
     setCurrentRoute(route);
+    setNavOpen(false);
     window.location.hash = route;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -43,10 +47,10 @@ export default function App() {
     const path = currentRoute.split('?')[0];
     switch (path) {
       case '/':
-      case '/dashboard':
-        return <Dashboard navigate={navigate} />;
       case '/landing':
         return <Landing navigate={navigate} />;
+      case '/dashboard':
+        return <Dashboard navigate={navigate} />;
       case '/scanner':
         return <Scanner navigate={navigate} />;
       case '/wallet-health':
@@ -74,23 +78,41 @@ export default function App() {
     }
   };
 
+  const routePath = currentRoute.split('?')[0];
+  const isLanding = routePath === '/' || routePath === '/landing';
+
   return (
     <SecurityProvider>
-      <div className="min-h-screen bg-[#0B0F14] text-[#E6EAF0] flex flex-col font-sans">
-        {/* Left Fixed Sidebar */}
-        <Sidebar currentRoute={currentRoute.split('?')[0]} navigate={navigate} />
-
-        {/* Top Header */}
-        <Topbar navigate={navigate} />
-
-        {/* Main Content View */}
-        <main className="ml-64 mt-14 p-6 min-h-[calc(100vh-3.5rem)] max-w-7xl">
+      {isLanding ? (
+        <div className="min-h-screen bg-[#F5F7F5]">
           {renderCurrentPage()}
-        </main>
+          <ChatPanel navigate={navigate} />
+        </div>
+      ) : (
+        <div className="min-h-screen bg-[#0B0F14] text-zinc-100 flex flex-col font-sans">
+          {/* Left sidebar (drawer on small screens) */}
+          <Sidebar
+            currentRoute={routePath}
+            navigate={navigate}
+            open={navOpen}
+            onClose={() => setNavOpen(false)}
+          />
 
-        {/* Collapsible Right-Docked Support Chatbot */}
-        <ChatPanel navigate={navigate} />
-      </div>
+          {/* Top header */}
+          <Topbar navigate={navigate} onMenu={() => setNavOpen(true)} />
+
+          {/* Main content */}
+          <main
+            key={routePath}
+            className="page-enter lg:ml-64 mt-16 px-4 sm:px-6 lg:px-8 py-6 min-h-[calc(100vh-4rem)] max-w-[1400px]"
+          >
+            {renderCurrentPage()}
+          </main>
+
+          {/* Collapsible right-docked support chatbot */}
+          <ChatPanel navigate={navigate} />
+        </div>
+      )}
     </SecurityProvider>
   );
 }

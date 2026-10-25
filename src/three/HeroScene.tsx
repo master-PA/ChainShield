@@ -37,11 +37,11 @@ export const HeroScene: React.FC = () => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0x06b6d4, 1.2);
+    const dirLight1 = new THREE.DirectionalLight(0x2e8b63, 1.2);
     dirLight1.position.set(5, 5, 5);
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x14b8a6, 0.8);
+    const dirLight2 = new THREE.DirectionalLight(0x227a55, 0.8);
     dirLight2.position.set(-5, -3, 3);
     scene.add(dirLight2);
 
@@ -50,17 +50,17 @@ export const HeroScene: React.FC = () => {
 
     // Matte materials
     const shieldMaterial = new THREE.MeshStandardMaterial({
-      color: 0x11161d,
+      color: 0x12321f,
       roughness: 0.45,
       metalness: 0.35,
     });
     const chainMaterial = new THREE.MeshStandardMaterial({
-      color: 0x14b8a6,
+      color: 0x227a55,
       roughness: 0.3,
       metalness: 0.7,
     });
     const coreMaterial = new THREE.MeshStandardMaterial({
-      color: 0x06b6d4,
+      color: 0x2e8b63,
       roughness: 0.2,
       metalness: 0.8,
     });

@@ -60,7 +60,7 @@ export const ThreatGlobe: React.FC<{ selectedCategory?: string }> = ({ selectedC
     const ambient = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambient);
 
-    const dirLight = new THREE.DirectionalLight(0x06b6d4, 1.2);
+    const dirLight = new THREE.DirectionalLight(0x2e8b63, 1.2);
     dirLight.position.set(3, 4, 3);
     scene.add(dirLight);
 
@@ -70,7 +70,7 @@ export const ThreatGlobe: React.FC<{ selectedCategory?: string }> = ({ selectedC
     // Wireframe base sphere
     const sphereGeo = new THREE.SphereGeometry(globeRadius, 24, 24);
     const sphereMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
+      color: 0x12321f,
       roughness: 0.8,
       metalness: 0.2,
       wireframe: true,
@@ -81,7 +81,7 @@ export const ThreatGlobe: React.FC<{ selectedCategory?: string }> = ({ selectedC
 
     // Solid inner core
     const innerGeo = new THREE.SphereGeometry(globeRadius * 0.98, 20, 20);
-    const innerMat = new THREE.MeshBasicMaterial({ color: 0x0b0f14 });
+    const innerMat = new THREE.MeshBasicMaterial({ color: 0x0d2416 });
     const innerMesh = new THREE.Mesh(innerGeo, innerMat);
     globeGroup.add(innerMesh);
 
@@ -118,7 +118,7 @@ export const ThreatGlobe: React.FC<{ selectedCategory?: string }> = ({ selectedC
     const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
     const curvePoints = curve.getPoints(30);
     const arcGeo = new THREE.BufferGeometry().setFromPoints(curvePoints);
-    const arcMat = new THREE.LineBasicMaterial({ color: 0x14b8a6, transparent: true, opacity: 0.75 });
+    const arcMat = new THREE.LineBasicMaterial({ color: 0x227a55, transparent: true, opacity: 0.75 });
     const arcLine = new THREE.Line(arcGeo, arcMat);
     globeGroup.add(arcLine);
 

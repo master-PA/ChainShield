@@ -1,22 +1,15 @@
 import React, { useState } from 'react';
-import { Search, Globe2, HelpCircle, Headphones, Sparkles, AlertCircle } from 'lucide-react';
+import { Search, Globe2, HelpCircle, Headphones, Menu } from 'lucide-react';
 import { useSecurity } from '../../context/SecurityContext';
 
 interface TopbarProps {
   navigate: (route: string) => void;
+  onMenu?: () => void;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ navigate }) => {
-  const {
-    language,
-    toggleLanguage,
-    explainSimply,
-    toggleExplainSimply,
-    chatOpen,
-    setChatOpen,
-    isDemoDataset,
-    runTargetScan,
-  } = useSecurity();
+export const Topbar: React.FC<TopbarProps> = ({ navigate, onMenu }) => {
+  const { language, toggleLanguage, explainSimply, toggleExplainSimply, chatOpen, setChatOpen, isDemoDataset, runTargetScan } =
+    useSecurity();
 
   const [searchVal, setSearchVal] = useState('');
 
@@ -28,66 +21,62 @@ export const Topbar: React.FC<TopbarProps> = ({ navigate }) => {
     setSearchVal('');
   };
 
+  const pill = (active: boolean) =>
+    `flex items-center gap-1.5 h-9 px-3.5 rounded-full text-xs font-semibold border transition-colors ${
+      active ? 'bg-teal-950 text-teal-300 border-teal-800' : 'bg-[#11161D] text-zinc-400 border-[#1F2630] hover:text-zinc-100 hover:border-teal-700'
+    }`;
+
   return (
-    <header className="h-14 bg-[#11161D] border-b border-[#1F2630] fixed top-0 right-0 left-64 z-20 flex items-center justify-between px-6 select-none">
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
+    <header className="h-16 bg-[#F5F7F5]/85 backdrop-blur-xl border-b border-[#1F2630] fixed top-0 right-0 left-0 lg:left-64 z-20 flex items-center gap-3 px-4 sm:px-6 lg:px-8 select-none">
+      <button
+        onClick={onMenu}
+        className="lg:hidden w-10 h-10 grid place-items-center rounded-[11px] bg-[#11161D] border border-[#1F2630] text-zinc-300"
+        aria-label="Open menu"
+      >
+        <Menu className="w-4 h-4" />
+      </button>
+
+      {/* Search */}
+      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl" role="search">
         <div className="relative">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Pre-scan target (e.g. mintzone-nft.xyz, 0xAbc9...)"
+            aria-label="Pre-scan a target"
+            placeholder="Pre-scan a target — mintzone-nft.xyz, 0xAbc9…"
             value={searchVal}
             onChange={(e) => setSearchVal(e.target.value)}
-            className="w-full bg-[#161D26] border border-[#1F2630] rounded-md pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-teal-500 font-mono transition-colors"
+            className="w-full h-10 bg-[#11161D] border border-[#1F2630] rounded-full pl-10 pr-4 text-xs text-zinc-200 focus:outline-none focus:border-teal-500 font-mono transition-colors"
           />
         </div>
       </form>
 
       {/* Controls */}
-      <div className="flex items-center space-x-3">
-        {/* Demo Indicator */}
+      <div className="flex items-center gap-2 ml-auto">
+        <span className="hidden xl:inline-flex items-center gap-2 h-9 px-3.5 rounded-full bg-[#11161D] border border-[#1F2630] font-mono text-[11px] text-teal-400">
+          <span className="w-[7px] h-[7px] rounded-full bg-teal-500 shadow-[0_0_0_3px_rgba(34,122,85,.18)] animate-pulse" />
+          Shield ready
+        </span>
+
         {isDemoDataset && (
-          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-teal-950/80 text-teal-300 border border-teal-800">
+          <span className="hidden md:inline-flex items-center h-9 px-3.5 rounded-full text-[11px] font-mono bg-teal-950 text-teal-300 border border-teal-800">
             Demo dataset
           </span>
         )}
 
-        {/* Explain Simply Toggle */}
-        <button
-          onClick={toggleExplainSimply}
-          title="Toggle simplified plain language mode"
-          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded text-xs border transition-colors ${
-            explainSimply
-              ? 'bg-teal-950 text-teal-300 border-teal-700'
-              : 'bg-[#161D26] text-zinc-400 border-[#1F2630] hover:text-zinc-200'
-          }`}
-        >
+        <button onClick={toggleExplainSimply} title="Toggle simplified plain-language mode" className={pill(explainSimply)} aria-pressed={explainSimply}>
           <HelpCircle className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Explain simply</span>
-          <span className="text-[10px] font-mono uppercase">{explainSimply ? 'ON' : 'OFF'}</span>
+          <span className="text-[10px] font-mono uppercase">{explainSimply ? 'On' : 'Off'}</span>
         </button>
 
-        {/* Language Switch */}
-        <button
-          onClick={toggleLanguage}
-          title="Switch language between English and Hinglish"
-          className="flex items-center space-x-1.5 px-2.5 py-1 rounded text-xs bg-[#161D26] border border-[#1F2630] text-zinc-300 hover:border-zinc-700 transition-colors"
-        >
-          <Globe2 className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="font-mono text-[11px] uppercase">{language === 'en' ? 'EN' : 'HINGLISH'}</span>
+        <button onClick={toggleLanguage} title="Switch language between English and Hinglish" className={pill(false)}>
+          <Globe2 className="w-3.5 h-3.5 text-zinc-500" />
+          <span className="font-mono text-[11px] uppercase">{language === 'en' ? 'EN' : 'Hinglish'}</span>
         </button>
 
-        {/* Support Chatbot trigger */}
-        <button
-          onClick={() => setChatOpen(!chatOpen)}
-          className={`flex items-center space-x-1.5 px-2.5 py-1 rounded text-xs border transition-colors ${
-            chatOpen
-              ? 'bg-teal-950 text-teal-300 border-teal-700'
-              : 'bg-[#161D26] text-zinc-300 border-[#1F2630] hover:border-zinc-700'
-          }`}
-        >
-          <Headphones className="w-3.5 h-3.5 text-teal-400" />
+        <button onClick={() => setChatOpen(!chatOpen)} className={pill(chatOpen)} aria-pressed={chatOpen}>
+          <Headphones className="w-3.5 h-3.5 text-teal-500" />
           <span className="hidden sm:inline">Support</span>
         </button>
       </div>

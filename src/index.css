@@ -1,55 +1,180 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --bg-base: #0B0F14;
-    --bg-surface: #11161D;
-    --bg-card: #161D26;
-    --bg-card-hover: #1C2430;
-    --border-subtle: #1F2630;
-    --border-strong: #2D3748;
-    --text-primary: #E6EAF0;
-    --text-secondary: #8A94A3;
-    --text-muted: #5A6472;
-    --accent-teal: #14B8A6;
-    --accent-cyan: #06B6D4;
-    --risk-low: #10B981;
-    --risk-caution: #F59E0B;
-    --risk-high: #F97316;
-    --risk-critical: #EF4444;
-  }
+/* ==========================================================================
+   ChainShield Sentinel — light "green" design system
+   Tokens come from the reference design (code 2.html).
+   The legacy dark classes used across the app (zinc / teal / bg-[#11161D] ...)
+   are remapped here so every page adopts the new look without rewrites.
+   ========================================================================== */
 
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* radii */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* neutrals (zinc → green-tinted ink scale) */
+  --color-zinc-100: #13211a;
+  --color-zinc-200: #1c2b23;
+  --color-zinc-300: #3b4a42;
+  --color-zinc-400: #55655c;
+  --color-zinc-500: #6a7a71;
+  --color-zinc-600: #8a978f;
+  --color-zinc-700: #c9d3cd;
+  --color-zinc-800: #dce4df;
+  --color-zinc-900: #edf2ee;
+  --color-zinc-950: #f5f7f5;
+
+  /* brand green */
+  --color-teal-200: #0f4a31;
+  --color-teal-300: #165a3d;
+  --color-teal-400: #1b6b49;
+  --color-teal-500: #227a55;
+  --color-teal-600: #1b6b49;
+  --color-teal-700: #7db899;
+  --color-teal-800: #b6d9c5;
+  --color-teal-900: #cfe8da;
+  --color-teal-950: #e4f2ea;
+
+  --color-emerald-200: #0f5b3a;
+  --color-emerald-300: #166b45;
+  --color-emerald-400: #1c7a4e;
+  --color-emerald-500: #2aa775;
+  --color-emerald-800: #a9d7be;
+  --color-emerald-900: #cfe8da;
+  --color-emerald-950: #e4f2ea;
+
+  /* severity */
+  --color-amber-300: #8a5a10;
+  --color-amber-400: #b4791b;
+  --color-amber-500: #d9951f;
+  --color-amber-800: #e8cb93;
+  --color-amber-950: #fbf1dc;
+
+  --color-orange-300: #a4480b;
+  --color-orange-400: #c2570c;
+  --color-orange-500: #e0701a;
+  --color-orange-800: #f0c7a4;
+  --color-orange-950: #fdebdd;
+
+  --color-rose-200: #8e1f36;
+  --color-rose-300: #a82642;
+  --color-rose-400: #c2415c;
+  --color-rose-500: #d6455f;
+  --color-rose-600: #c0334e;
+  --color-rose-700: #e3a3b0;
+  --color-rose-800: #f0b8c3;
+  --color-rose-900: #f7d5dc;
+  --color-rose-950: #fce8ec;
+}
+
+:root {
+  --bg: #f5f7f5;
+  --bg-soft: #edf2ee;
+  --surface: #ffffff;
+  --ink: #13211a;
+  --ink-2: #3b4a42;
+  --muted: #6a7a71;
+  --line: rgba(19, 33, 26, 0.09);
+  --line-2: rgba(19, 33, 26, 0.16);
+  --brand: #227a55;
+  --brand-deep: #165a3d;
+  --brand-soft: #e4f2ea;
+  --brand-line: rgba(34, 122, 85, 0.22);
+  --blue: #3e63dd;
+  --amber: #b4791b;
+  --violet: #6e56cf;
+  --sh-1: 0 1px 2px rgba(19, 33, 26, 0.05), 0 8px 24px -12px rgba(19, 33, 26, 0.08);
+  --sh-2: 0 2px 4px rgba(19, 33, 26, 0.05), 0 18px 44px -18px rgba(19, 33, 26, 0.14);
+  --sh-3: 0 30px 70px -28px rgba(19, 33, 26, 0.22);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
-    background-color: var(--bg-base);
-    color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
     overflow-x: hidden;
     margin: 0;
     padding: 0;
+    -webkit-font-smoothing: antialiased;
   }
-
   code, pre, .font-mono {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-mono);
+  }
+  ::selection {
+    background: var(--brand);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 }
 
-/* Custom scrollbars for security console look */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ---------- legacy dark surfaces → light surfaces (unlayered so they win) ---------- */
+.bg-\[\#0B0F14\] { background-color: var(--bg); }
+.bg-\[\#11161D\] { background-color: var(--surface); }
+.bg-\[\#161D26\] { background-color: #f1f5f2; }
+.bg-\[\#161D26\]\/60 { background-color: rgba(241, 245, 242, 0.7); }
+.bg-\[\#161D26\]\/80 { background-color: rgba(255, 255, 255, 0.85); }
+.bg-\[\#161D26\]\/90 { background-color: rgba(255, 255, 255, 0.92); }
+.bg-\[\#0E131A\] { background-color: var(--bg-soft); }
+.bg-\[\#1F2634\],
+.bg-\[\#1C2634\] { background-color: #e4ebe6; }
+.hover\:bg-\[\#1F2634\]:hover { background-color: #e4ebe6; }
+.hover\:bg-\[\#161D26\]:hover { background-color: #eaf0ec; }
+
+.border-\[\#1F2630\] { border-color: var(--line); }
+.border-\[\#1F2630\]\/60,
+.border-\[\#1F2630\]\/80 { border-color: var(--line); }
+.divide-\[\#1F2630\]\/60 > :not(:last-child) { border-color: var(--line); }
+
+/* dark text that sat on bright teal buttons → white on brand green */
+.text-\[\#0B0F14\] { color: #fff; }
+.text-\[\#E6EAF0\] { color: var(--ink); }
+
+/* soft elevation for white cards */
+.bg-\[\#11161D\].rounded-lg,
+.bg-\[\#11161D\].rounded-xl { box-shadow: var(--sh-1); }
+
+/* inputs */
+input, textarea, select {
+  font-family: inherit;
 }
-::-webkit-scrollbar-track {
-  background: #0B0F14;
-}
-::-webkit-scrollbar-thumb {
-  background: #1F2630;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #2D3748;
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 0 3px rgba(34, 122, 85, 0.14);
 }
 
-/* Subtle glow-free transitions */
+/* scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cdd8d1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #aebdb4; }
+
 .transition-surface {
   transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* ---------- shared app-shell helpers ---------- */
+.page-enter { animation: pageUp 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes pageUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

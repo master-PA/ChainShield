@@ -38,7 +38,7 @@ export const EvidenceChain: React.FC<EvidenceChainProps> = ({
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambient);
-    const dir = new THREE.DirectionalLight(0x14b8a6, 1.2);
+    const dir = new THREE.DirectionalLight(0x227a55, 1.2);
     dir.position.set(2, 4, 3);
     scene.add(dir);
 
@@ -52,7 +52,7 @@ export const EvidenceChain: React.FC<EvidenceChainProps> = ({
 
       const blockGeo = new THREE.BoxGeometry(0.7, 0.5, 0.4);
       const blockMat = new THREE.MeshStandardMaterial({
-        color: isTargetBlock ? 0x14b8a6 : 0x1e293b,
+        color: isTargetBlock ? 0x227a55 : 0x1b4e33,
         roughness: isTargetBlock ? 0.2 : 0.6,
         metalness: isTargetBlock ? 0.7 : 0.3,
       });
@@ -64,7 +64,7 @@ export const EvidenceChain: React.FC<EvidenceChainProps> = ({
       // Connecting chain link
       if (i < blockCount - 1) {
         const linkGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.45);
-        const linkMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.4, metalness: 0.6 });
+        const linkMat = new THREE.MeshStandardMaterial({ color: 0x6a7a71, roughness: 0.4, metalness: 0.6 });
         const linkMesh = new THREE.Mesh(linkGeo, linkMat);
         linkMesh.rotation.z = Math.PI / 2;
         linkMesh.position.set(x + 0.52, 0, 0);
